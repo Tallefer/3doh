@@ -42,6 +42,7 @@ void fill_audio(void *udata, Uint8 *stream, int len)
 		SDL_PauseAudio(1);
 		audio_pointer=0;
 		audio_read=0;
+		printf("INFO: audio underrun!\n");
 		return;
 	
 	}
@@ -110,7 +111,7 @@ void soundFillBuffer(unsigned int dspLoop)
 
 		}
 
-		if(audio_pointer>buffer_size/2)
+		if(audio_pointer>buffer_size*3/4)
 			SDL_PauseAudio(0);
 
 //			printf("audio_pointer %d\n",audio_pointer);

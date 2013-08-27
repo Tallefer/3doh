@@ -6,6 +6,21 @@ typedef struct{
 
 }inputState;
 
+typedef struct{
+	int buttonup;		
+	int buttondown;		
+	int buttonleft;		
+	int buttonright;		
+	int buttona;		
+	int buttonb;		
+	int buttonc;
+	int buttonl;		
+	int buttonr;		
+	int buttonx;
+	int buttonp;
+
+}inputMapping;
+
 #define INPUTBUTTONL     (1<<4)
 #define INPUTBUTTONR     (1<<5)
 #define INPUTBUTTONX     (1<<6)

@@ -3,8 +3,8 @@ CC = g++
 DEBUG =
 SDL_CFLAGS := $(shell sdl-config --cflags)
 SDL_LDFLAGS := $(shell sdl-config --libs)
-CFLAGS =-msse3 -mfpmath=sse -march=native -ftree-vectorize -flto -Ofast -ffast-math -fomit-frame-pointer -funsafe-loop-optimizations -funsafe-math-optimizations -ffinite-math-only -fno-trapping-math -frounding-math -fsingle-precision-constant -Wall $(SDL_CFLAGS) -I./ -I./freedo -I./freedo/filters
-OCFLAGS =  -g -O3 -ffast-math -Wall $(SDL_CFLAGS) -I./ -I./freedo -I./freedo/filters -fno-omit-frame-pointer
+OCFLAGS = -O3 -msse3  -ftree-vectorizer-verbose=2 -mfpmath=sse -march=native -ftree-vectorize -flto -fomit-frame-pointer -funsafe-loop-optimizations -funsafe-math-optimizations -ffinite-math-only -fno-trapping-math -frounding-math -fsingle-precision-constant -Wall $(SDL_CFLAGS) -I./ -I./freedo -I./freedo/filters
+CFLAGS = -DUSEGL -g -Wall $(SDL_CFLAGS) -I./ -I./freedo -I./freedo/filters -fno-omit-frame-pointer
 LFLAGS = -Wall $(DEBUG)
 LIBS = $(SDL_LDFLAGS) -lm  -lGL -lGLU -L/usr/lib/gcc/i486-linux-gnu/4.7 -L/usr/lib -lstdc++ 
 
@@ -29,6 +29,7 @@ video.o \
 sound.o \
 cdrom.o \
 input.o \
+config.o \
 main.o
 
 all: $(TARGET)
@@ -46,4 +47,4 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f freedo/*.o $(TARGET)
+	rm -r $(OBJS) $(TARGET)

@@ -3,14 +3,64 @@
 #include <stdlib.h>
 
 #include "input.h"
+#include "video.h"
+#include "config.h"
 
 
 SDL_Event eventjoy;
 inputState internal_input_state;
 int usekb=0;
-SDL_Joystick *joystick;
+SDL_Joystick *joystick[6];
 int isexit=0;
 int fullscreen=0;
+
+inputMapping joystick0;
+
+
+int inputMapButton(char *button)
+{
+
+	printf("%s\n",button);
+	if(strcmp(button,"JOY_BUTTON0")==0) return 0;
+	if(strcmp(button,"JOY_BUTTON1")==0) return 1;
+	if(strcmp(button,"JOY_BUTTON2")==0) return 2;
+	if(strcmp(button,"JOY_BUTTON3")==0) return 3;
+	if(strcmp(button,"JOY_BUTTON4")==0) return 4;
+	if(strcmp(button,"JOY_BUTTON5")==0) return 5;
+	if(strcmp(button,"JOY_BUTTON6")==0) return 6;
+	if(strcmp(button,"JOY_BUTTON7")==0) return 7;
+	if(strcmp(button,"JOY_BUTTON8")==0) return 8;
+	if(strcmp(button,"JOY_BUTTON9")==0) return 9;
+	if(strcmp(button,"JOY_BUTTON10")==0) return 10;
+
+	return 0;
+			
+
+}
+
+
+void inputReadConfig()
+{
+
+	configOpen("config.ini");
+
+	joystick0.buttonup = inputMapButton(configReadString("joystick0","buttonup"));
+	joystick0.buttondown = inputMapButton(configReadString("joystick0","buttondown"));
+	joystick0.buttonleft = inputMapButton(configReadString("joystick0","buttonleft"));
+	joystick0.buttonright = inputMapButton(configReadString("joystick0","buttonright"));
+	joystick0.buttona = inputMapButton(configReadString("joystick0","buttona"));
+	joystick0.buttonb = inputMapButton(configReadString("joystick0","buttonb"));
+	joystick0.buttonc = inputMapButton(configReadString("joystick0","buttonc"));
+	joystick0.buttonl = inputMapButton(configReadString("joystick0","buttonl"));
+	joystick0.buttonr = inputMapButton(configReadString("joystick0","buttonr"));
+	joystick0.buttonx = inputMapButton(configReadString("joystick0","buttonx"));
+	joystick0.buttonp = inputMapButton(configReadString("joystick0","buttonp"));
+
+	configClose();
+
+
+
+}
 
 int inputQuit()
 {
@@ -25,13 +75,25 @@ int inputFullscreen()
 int inputInit()
 {
 
+	int i=0;
+	printf("INFO: reading input config\n");
+	inputReadConfig();
 
+	if((SDL_InitSubSystem( SDL_INIT_JOYSTICK )) < 0 )
+	{
+		printf("ERROR: can't init joystick subsystem\n");
+		return 0;
+	}
+
+	printf("INFO: input found %d joysticks\n",inputEnum());
 	if(inputEnum()==0){
 		usekb=1;
 	}
 
-	joystick=inputOpen(0);
-
+	for(i=0;i<inputEnum();i++)
+	{
+		joystick[i]=inputOpen(i);
+	}
 	return SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 
 }
@@ -65,77 +127,101 @@ void inputPoll(SDL_Joystick *joy)
 	    switch(eventjoy.type)
 	    {
 
-	/*	case SDL_JOYAXISMOTION:
+		case SDL_JOYAXISMOTION:
 	        	if( eventjoy.jaxis.axis == 0){
-				internal_input_state.axis1x=eventjoy.jaxis.value;
+		//		internal_input_state.axis1x=eventjoy.jaxis.value;
 				if(eventjoy.jaxis.value < -3200){
-					internal_input_state.buttons&=~JOY_RIGHT;
-					internal_input_state.buttons|=JOY_LEFT;
+					internal_input_state.buttons&=~INPUTBUTTONRIGHT;
+					internal_input_state.buttons|=INPUTBUTTONLEFT;
 				}else if(eventjoy.jaxis.value > 3200){
-					internal_input_state.buttons&=~JOY_LEFT;
-					internal_input_state.buttons|=JOY_RIGHT;
+					internal_input_state.buttons&=~INPUTBUTTONLEFT;
+					internal_input_state.buttons|=INPUTBUTTONRIGHT;
 				}else{
-					internal_input_state.buttons&=~JOY_LEFT;
-					internal_input_state.buttons&=~JOY_RIGHT;
+					internal_input_state.buttons&=~INPUTBUTTONLEFT;
+					internal_input_state.buttons&=~INPUTBUTTONRIGHT;
 				}
 
 			}
 			if( eventjoy.jaxis.axis == 1){
-				internal_input_state.axis1y=eventjoy.jaxis.value;
+		//		internal_input_state.axis1y=eventjoy.jaxis.value;
 				if(eventjoy.jaxis.value < -3200){
-					internal_input_state.buttons&=~JOY_DOWN;
-					internal_input_state.buttons|=JOY_UP;
+					internal_input_state.buttons&=~INPUTBUTTONDOWN;
+					internal_input_state.buttons|=INPUTBUTTONUP;
 				}else if(eventjoy.jaxis.value > 3200){
-					internal_input_state.buttons&=~JOY_UP;
-					internal_input_state.buttons|=JOY_DOWN;
+					internal_input_state.buttons&=~INPUTBUTTONUP;
+					internal_input_state.buttons|=INPUTBUTTONDOWN;
 				}else{
-					internal_input_state.buttons&=~JOY_UP;
-					internal_input_state.buttons&=~JOY_DOWN;
+					internal_input_state.buttons&=~INPUTBUTTONUP;
+					internal_input_state.buttons&=~INPUTBUTTONDOWN;
 				}
 			}
 		break;
 
 		case SDL_JOYBUTTONDOWN:
-		    switch(eventjoy.jbutton.button)
-		    {
-		        case 0: 
-		        	internal_input_state.buttons|=JOY_BUTTON0;break;
-		        case 1: 
-		        	internal_input_state.buttons|=JOY_BUTTON1;break;
-		        case 2: 
-		        	internal_input_state.buttons|=JOY_BUTTON2;break;
-		        case 3: 
-		        	internal_input_state.buttons|=JOY_BUTTON3;break;
-		        case 4: 
-		        	internal_input_state.buttons|=JOY_BUTTON4;break;
-		        case 5: 
-		        	internal_input_state.buttons|=JOY_BUTTON5;break;
-		        case 6: 
-		        	internal_input_state.buttons|=JOY_BUTTON6;break;
-		        case 7:
-				internal_input_state.buttons|=JOY_BUTTON7;break;
-		    }break;
+
+			if(eventjoy.jbutton.button==joystick0.buttona)
+			{
+				internal_input_state.buttons|=INPUTBUTTONA;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonb)
+			{
+				internal_input_state.buttons|=INPUTBUTTONB;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonc)
+			{
+				internal_input_state.buttons|=INPUTBUTTONC;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonl)
+			{
+				internal_input_state.buttons|=INPUTBUTTONL;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonr)
+			{
+				internal_input_state.buttons|=INPUTBUTTONR;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonx)
+			{
+				internal_input_state.buttons|=INPUTBUTTONX;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonp)
+			{
+				internal_input_state.buttons|=INPUTBUTTONP;
+			}
+
+		break;
 
 		case SDL_JOYBUTTONUP:
-		    switch(eventjoy.jbutton.button)
-		    {
-		        case 0: 
-		        	internal_input_state.buttons&=~JOY_BUTTON0;break;
-		        case 1: 
-		        	internal_input_state.buttons&=~JOY_BUTTON1;break;
-		        case 2: 
-		        	internal_input_state.buttons&=~JOY_BUTTON2;break;
-		        case 3: 
-		        	internal_input_state.buttons&=~JOY_BUTTON3;break;
-		        case 4: 
-		        	internal_input_state.buttons&=~JOY_BUTTON4;break;
-		        case 5: 
-		        	internal_input_state.buttons&=~JOY_BUTTON5;break;
-		        case 6: 
-		        	internal_input_state.buttons&=~JOY_BUTTON6;break;
-		        case 7:
-				internal_input_state.buttons&=~JOY_BUTTON7;break;
-		    }break;*/
+
+			if(eventjoy.jbutton.button==joystick0.buttona)
+			{
+				internal_input_state.buttons&=~INPUTBUTTONA;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonb)
+			{
+				internal_input_state.buttons&=~INPUTBUTTONB;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonc)
+			{
+				internal_input_state.buttons&=~INPUTBUTTONC;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonl)
+			{
+				internal_input_state.buttons&=~INPUTBUTTONL;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonr)
+			{
+				internal_input_state.buttons&=~INPUTBUTTONR;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonx)
+			{
+				internal_input_state.buttons&=~INPUTBUTTONX;
+			}
+			else if(eventjoy.jbutton.button==joystick0.buttonp)
+			{
+				internal_input_state.buttons&=~INPUTBUTTONP;
+			}
+
+		break;
 
 		case SDL_QUIT:
 			isexit=1;break;
@@ -224,6 +310,9 @@ void inputPoll(SDL_Joystick *joy)
 						break;
 				case SDLK_F11:
 		        		fullscreen^=1;
+						if(fullscreen)toggleFullscreen();
+				case SDLK_ESCAPE:
+		        		isexit=1;
 						break;
 				default:
 					break;
@@ -294,9 +383,13 @@ char CalculateDeviceHighByte(int deviceNumber, int deviceCount)
 
 unsigned char *inputRead()
 {
-
-	inputPoll(joystick);
+	int i=0;
 	int deviceCount=inputEnum()+1;
+	
+	for(i=0;i<inputEnum();i++)
+	{
+		inputPoll(joystick[i]);
+	}
 
 	unsigned char *data=(unsigned char *)malloc(sizeof(unsigned char)*16);
 	data[0x0] = 0x00;

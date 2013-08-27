@@ -14,6 +14,13 @@ int cdromOpenIso(char *path)
 {
 
 	fcdrom=fopen(path,"rb");
+	if(!fcdrom) 
+	{	
+		printf("ERROR: can't load game file, exiting\n");
+	return 0;
+
+	}
+	printf("INFO: game file loaded succesfully\n");
 	return 1;
 }
 
@@ -64,7 +71,7 @@ unsigned int cdromDiscSize()
 	memcpy(&temp,ssize,4);
 	size=(temp & 0x000000FFU) << 24 | (temp & 0x0000FF00U) << 8 |
 	   (temp & 0x00FF0000U) >> 8 | (temp & 0xFF000000U) >> 24;
-	printf("disc size1 %d\n",size);
+	printf("INFO: disc size: %d sectors\n",size);
 	return size;
 
 }

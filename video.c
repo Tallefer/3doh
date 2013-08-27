@@ -3,7 +3,6 @@
 #include "video.h"
 #include "frame.h"
 
-#define USEGL 1
 
 int screen_width=0;
 int screen_height=0;
@@ -34,7 +33,7 @@ int initVideo(int w,int h, int bpp)
 		return 0;
 	}
 
-	if((screen = SDL_SetVideoMode(w,h,bpp,SDL_SWSURFACE|SDL_DOUBLEBUF)) < 0)
+	if((screen = SDL_SetVideoMode(320,240,32,SDL_SWSURFACE|SDL_DOUBLEBUF)) < 0)
 	{
 		printf("ERROR: can't set video mode\n");
 		return 0;
@@ -49,7 +48,7 @@ int initVideo(int w,int h, int bpp)
 void toggleFullscreen()
 {
 
-//	SDL_WM_ToggleFullScreen(screen);
+	SDL_WM_ToggleFullScreen(screen);
 
 }
 
@@ -67,21 +66,21 @@ SDL_Surface *videoInitGL(int width,int height,int bpp)
 
 	if((SDL_Init( SDL_INIT_VIDEO )) < 0 )
 	{
-		printf("error, no inicia video");
+		printf("ERROR: can't start SDL VIDEO\n");
 		return 0;
 	}
 	
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
 
-	
+	printf("INFO: setting video mode:%dx%dx%d\n",width,height,bpp);
 	if((screen = SDL_SetVideoMode(width,height,bpp,SDL_OPENGL)) < 0)
 	{
-		printf("error, no inicia modo gráfico");
+		printf("ERROR: can't set video mode\n");
 		return 0;
 	}
 	
-
+	printf("INFO: video mode set\n");
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	glPushAttrib(GL_ENABLE_BIT);
@@ -150,14 +149,19 @@ ScalingAlgorithm sca=None;
 int rw,rh;
 
 		fd_interface(FDP_DO_EXECFRAME,frame);
+#ifdef USEGL
     	if(SDL_MUSTLOCK(image))SDL_LockSurface( image );
 		Get_Frame_Bitmap((VDLFrame *)frame,image->pixels,image->w,&bmpcrop,320,240,0,0,0,sca,&rw,&rh);
 		if(SDL_MUSTLOCK(image))SDL_UnlockSurface( image );
 
-#ifdef USEGL
+
 		videoDrawGL(loadTexture(image));
 		videoFlipGL();
 #else
+    	if(SDL_MUSTLOCK(screen))SDL_LockSurface( screen );
+		Get_Frame_Bitmap((VDLFrame *)frame,screen->pixels,screen->w,&bmpcrop,320,240,0,1,0,sca,&rw,&rh);
+		if(SDL_MUSTLOCK(screen))SDL_UnlockSurface( screen );
+
 		SDL_Flip(screen);
 #endif
 

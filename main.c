@@ -1,16 +1,15 @@
-
-
-#include "freedocore.h"
-#include "frame.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <SDL/SDL.h>
+#include "freedocore.h"
+#include "frame.h"
 #include "common.h"
 #include "sound.h"
 #include "video.h"
 #include "cdrom.h"
 #include "input.h"
+#include "config.h"
 
 
 char* pNVRam;
@@ -25,7 +24,7 @@ bool __temporalfixes;
 int HightResMode;
 int __tex__scaler;
 
-void initEmu(int xres,int yres, int bpp, int armclock);
+int initEmu(int xres,int yres, int bpp, int armclock);
 
 UInt32 ReverseBytes(UInt32 value)
 {
@@ -105,10 +104,10 @@ void loadRom1(void *prom)
 	long fsize;
 	int readcount;
 
-	printf("loading bios in %s\n",biosFile);
+	printf("INFO: loading bios in %s\n",biosFile);
 	bios1=fopen(biosFile,"rb");
-	if (bios1==NULL)printf("Bios load error\n");
-	printf("Bios load success: %p\n",bios1);
+	if (bios1==NULL)printf("ERROR: Bios load error\n");
+	printf("INFO: Bios load success\n");
     fseek (bios1 , 0 , SEEK_END);
 	fsize = ftell(bios1);
 	rewind (bios1);
@@ -122,27 +121,6 @@ void loadRom1(void *prom)
 
 }
 
-
-void *loadRom2()
-{
-
-	FILE* bios1;
-	long fsize;
-	char *buffer;
-
-	printf("loading bios 2\n");
-	bios1=fopen("bios/bios.bin","rb");
-    fseek (bios1 , 0 , SEEK_END);
-	fsize = ftell(bios1);
-	rewind (bios1);
-	buffer = (char*)malloc(sizeof(char)*fsize);
-	fread(buffer,1,fsize,bios1);
-	fclose(bios1);
-
-
-	return buffer;
-
-}
 
 void *swapFrame(void *curr_frame)
 {
@@ -197,37 +175,60 @@ return (void *)readNvRam;
 }
 
 
+void readConfiguration()
+{
+
+	configOpen("config.ini");
+//	configReadInt("general","biosfile");
+//	configReadInt("general","screenwidth");
+//	configReadInt("general","screenheight");
+	configClose();
+
+}
+
 
 int main(int argc, char *argv[])
 {
 
+	int biosset=0;
+	int imageset=0;
+
+	readConfiguration();	
 
 	if(argc>1){
-		printf("0 is %s, 1 is %s %s %d\n",argv[0],argv[1],argv[2],argc);
+
 
 		int i;
 		for(i=0;i<argc;i++)
 		{
-			printf("%s\n",argv[i]);   
+//			printf("%s\n",argv[i]);   
 			if(strcmp(argv[i],"-b")==0){
 			/*set bios filename*/     
-			printf("a\n");   
 			sprintf(biosFile,"bios/%s",argv[i+1]);
+			biosset=1;
 			}
 			if(strcmp(argv[i],"-i")==0){
 			/*set image (iso) filename*/  
-			printf("b\n");         
 			sprintf(imageFile,"games/%s",argv[i+1]);
+			imageset=1;
 			}
 		}
 	}
 
-	initEmu(800,600,32,12500000);
+	if((biosset)&&(imageset))
+	{
+		if(!initEmu(800,600,32,12500000)) return 0;
 
 
-	/*free resources*/
-	io_interface(FDP_DESTROY,(void *)0);
-	soundClose();
+		/*free resources*/
+		fd_interface(FDP_DESTROY,(void *)0);
+		soundClose();
+		SDL_Quit();
+	}else{
+
+		printf("3d'oh! - a 3do emulator\nUsage 3doemu -b biosfile -i isofile\n");
+
+	}
 
 
 	return 0;
@@ -237,10 +238,10 @@ int main(int argc, char *argv[])
 
 
 ///int main(int argc, char *argv[])
-void initEmu(int xres,int yres, int bpp, int armclock)
+int initEmu(int xres,int yres, int bpp, int armclock)
 {
 
-	printf("INFO: starting zriidiiou emulator\n");
+	printf("INFO: starting 3d'oh! emulator\n");
 
 	int arm_clock=armclock;
 	int tex_quality=0;
@@ -257,7 +258,7 @@ void initEmu(int xres,int yres, int bpp, int armclock)
 	inputInit();
 
 
-	cdromOpenIso(imageFile);
+	if(!cdromOpenIso(imageFile)) return 0;
 
 
 //init freedo core
@@ -273,11 +274,11 @@ void initEmu(int xres,int yres, int bpp, int armclock)
 //	profile=io_interface(FDP_GETP_PROFILE,0);
 	_3do_Init();
 
-//	io_interface(FDP_GET_FRAME_BITMAP,frame);
 	int frame_end,framerate;
 	int time_start=0;
 	int frame_start=0;
 	int frames=0;
+	int debug=0;
 	time_start=SDL_GetTicks();
 	while(!quit){
 
@@ -295,24 +296,27 @@ void initEmu(int xres,int yres, int bpp, int armclock)
 		soundRun();
 
 
-		if(inputFullscreen())toggleFullscreen();
 		quit = inputQuit();
 		frame_end=SDL_GetTicks();
 		framerate=frame_end-frame_start;
 		if(framerate<17)SDL_Delay(17-framerate);
 		frames++;
+		if(framerate>20){
+			debug++;
+		}
 		if((frame_end-time_start)>=1000) 
 		{
 
-			printf("framerate:%d fps\n",frames);
+			printf("framerate:%d fps times:%d\n",frames,debug);
 			frames=0;
+			debug=0;
 			time_start=SDL_GetTicks();
 			
 
 		}
 
 	}
-	//_freedo_Interface(FDP_INIT,0);
 
-//	return 0;
+
+	return 1;
 }
