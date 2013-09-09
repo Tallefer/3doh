@@ -67,16 +67,21 @@ SDL_Surface *videoInitGL(int width,int height,int bpp)
 	if((SDL_Init( SDL_INIT_VIDEO )) < 0 )
 	{
 		printf("ERROR: can't start SDL VIDEO\n");
+		SDL_Quit();
 		return 0;
 	}
 	
 
+	SDL_ShowCursor(0);
+
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 1);
 
 	printf("INFO: setting video mode:%dx%dx%d\n",width,height,bpp);
-	if((screen = SDL_SetVideoMode(width,height,bpp,SDL_OPENGL)) < 0)
+	if((screen = SDL_SetVideoMode(width,height,bpp,SDL_DOUBLEBUF | SDL_OPENGL)) < 0)
 	{
 		printf("ERROR: can't set video mode\n");
+		SDL_Quit();
 		return 0;
 	}
 	
@@ -88,24 +93,17 @@ SDL_Surface *videoInitGL(int width,int height,int bpp)
 	glDisable(GL_CULL_FACE);
 	glEnable( GL_TEXTURE_2D );
 
-	/* This allows alpha blending of 2D textures with the scene */
-//	glEnable(GL_BLEND);
-//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glBlendFunc( GL_SRC_ALPHA, GL_ONE );
-
-	
-//	glViewport( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	glViewport( 0, 0, width, height);
 	
 	//glHint( GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST );
 
-	glMatrixMode(GL_PROJECTION);				
-	glPushMatrix();							
-	glLoadIdentity();						
+//	glMatrixMode(GL_PROJECTION);				
+//	glPushMatrix();							
+//	glLoadIdentity();						
 	glOrtho(0, (GLdouble)screen_width, (GLdouble)screen_height, 0, -100000, 100000);				
 	glMatrixMode(GL_MODELVIEW);					
-	glPushMatrix();							
-	glLoadIdentity();
+//	glPushMatrix();							
+//	glLoadIdentity();
 
 
 	image = SDL_CreateRGBSurface(
@@ -175,9 +173,6 @@ GLuint loadTexture(SDL_Surface *surface)
 	Uint8  saved_alpha;
 
 
-	
-
-
 	/* Create an OpenGL texture for the image */
 
 
@@ -202,7 +197,7 @@ void videoDrawGL(GLuint texture)
 
 	glPushMatrix();	
 
-	glEnable( GL_TEXTURE_2D );		
+//	glEnable( GL_TEXTURE_2D );		
 
 //	glTranslatef(screen_width/2 ,screen_height/2,0);
 	glTranslatef(0,0,0);

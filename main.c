@@ -317,6 +317,6 @@ int initEmu(int xres,int yres, int bpp, int armclock)
 
 	}
 
-
+	SDL_Quit();
 	return 1;
 }
