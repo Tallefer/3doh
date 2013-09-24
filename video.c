@@ -85,6 +85,8 @@ SDL_Surface *videoInitGL(int width,int height,int bpp)
 		return 0;
 	}
 	
+	SDL_WM_SetCaption("3d'oh!",0);
+
 	printf("INFO: video mode set\n");
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 

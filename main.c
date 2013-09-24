@@ -145,7 +145,7 @@ void * emuinterface(int procedure, void *datum=0)
 		return (void *) cdromDiscSize();
 		break;
 	case EXT_ON_SECTOR:
-		onsector=(int)datum;
+		onsector=*((int*)&datum);
 		break;
 	case EXT_READ_NVRAM:
 		readNvRam(datum);
@@ -153,7 +153,7 @@ void * emuinterface(int procedure, void *datum=0)
 	case EXT_WRITE_NVRAM:
 		break;
 	case EXT_PUSH_SAMPLE:
-		soundFillBuffer((unsigned int)datum);
+		soundFillBuffer(*((unsigned int*)&datum));
 		break;
 	case EXT_SWAPFRAME:
 		return swapFrame(datum);

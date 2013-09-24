@@ -1230,6 +1230,7 @@ int __fastcall _arm_Execute()
 		if(((cond_flags_cross[(((uint32)cmd)>>28)]>>((CPSR)>>28))&1))
 		{
 
+//			printf("%d\n",(cmd>>24)&0xf);
 			switch((cmd>>24)&0xf)  //разбор типа команды
 			{
 			case 0x0:	//Multiply
@@ -1526,7 +1527,7 @@ int __fastcall _arm_Execute()
 					decode_swi(cmd);
 					break;
 			//---------
-                        default:	//coprocessor
+            default:	//coprocessor
 					//!!Exeption!!
                                         //io_interface(EXT_DEBUG_PRINT,(void*)str.print("*PC: 0x%8.8X undefined\n",REG_PC).CStr());
 

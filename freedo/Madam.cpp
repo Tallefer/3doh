@@ -536,14 +536,15 @@ unsigned int __fastcall _madam_Peek(unsigned int addr)
 }
 
 
-void f(int  a, int  b, int  c,
-       int  e, int  f, int  g,
-       int   o)
+void inline dotp(float  *a,  float *b, float  *c,
+       float  *e, float  *f, float  *g,
+       float   *o)
 {
     int i;
+	for(i=0;i<3;i++){		
 
-    //for (i = 0; i < 2; ++i)
-        o = a*e + b*f + c*g/65536;
+        o[i] =((a[i]*e[i] + b[i]*f[i] + c[i]*g[i])/65536.0);
+	}
 }
 
 
@@ -619,27 +620,27 @@ void __fastcall _madam_Poke(unsigned int addr, unsigned int val)
 		return;
 
 //Matrix engine macros
-#define M00  ((double)(signed int)mregs[0x600])
-#define M01  ((double)(signed int)mregs[0x604])
-#define M02  ((double)(signed int)mregs[0x608])
-#define M03  ((double)(signed int)mregs[0x60C])
-#define M10  ((double)(signed int)mregs[0x610])
-#define M11  ((double)(signed int)mregs[0x614])
-#define M12  ((double)(signed int)mregs[0x618])
-#define M13  ((double)(signed int)mregs[0x61C])
-#define M20  ((double)(signed int)mregs[0x620])
-#define M21  ((double)(signed int)mregs[0x624])
-#define M22  ((double)(signed int)mregs[0x628])
-#define M23  ((double)(signed int)mregs[0x62C])
-#define M30  ((double)(signed int)mregs[0x630])
-#define M31  ((double)(signed int)mregs[0x634])
-#define M32  ((double)(signed int)mregs[0x638])
-#define M33  ((double)(signed int)mregs[0x63C])
+#define M00  ((float)(signed int)mregs[0x600])
+#define M01  ((float)(signed int)mregs[0x604])
+#define M02  ((float)(signed int)mregs[0x608])
+#define M03  ((float)(signed int)mregs[0x60C])
+#define M10  ((float)(signed int)mregs[0x610])
+#define M11  ((float)(signed int)mregs[0x614])
+#define M12  ((float)(signed int)mregs[0x618])
+#define M13  ((float)(signed int)mregs[0x61C])
+#define M20  ((float)(signed int)mregs[0x620])
+#define M21  ((float)(signed int)mregs[0x624])
+#define M22  ((float)(signed int)mregs[0x628])
+#define M23  ((float)(signed int)mregs[0x62C])
+#define M30  ((float)(signed int)mregs[0x630])
+#define M31  ((float)(signed int)mregs[0x634])
+#define M32  ((float)(signed int)mregs[0x638])
+#define M33  ((float)(signed int)mregs[0x63C])
 
-#define  V0  ((double)(signed int)mregs[0x640])
-#define  V1  ((double)(signed int)mregs[0x644])
-#define  V2  ((double)(signed int)mregs[0x648])
-#define  V3  ((double)(signed int)mregs[0x64C])
+#define  V0  ((float)(signed int)mregs[0x640])
+#define  V1  ((float)(signed int)mregs[0x644])
+#define  V2  ((float)(signed int)mregs[0x648])
+#define  V3  ((float)(signed int)mregs[0x64C])
 
 #define Rez0 mregs[0x660]
 #define Rez1 mregs[0x664]
@@ -689,16 +690,52 @@ void __fastcall _madam_Poke(unsigned int addr, unsigned int val)
 				Rez2=Rez2T;
 				Rez3=Rez3T;
 
-				
-/*				f(M00,M01,M02,V0,V1,V2,Rez0T);
-				f(M10,M11,M12,V0,V1,V2,Rez1T);
-				f(M20,M21,M22,V0,V1,V2,Rez2T);*/
+
+				float a[3];
+				float b[3];
+				float c[3];
+				float d[3];
+				float e[3];
+				float f[3];
+
+				float o[3];
+
+				a[0]=M00;
+				a[1]=M10;
+				a[2]=M20;
+
+				b[0]=M01;
+				b[1]=M11;
+				b[2]=M21;
+
+				c[0]=M02;
+				c[1]=M12;
+				c[2]=M22;
+
+				d[0]=V0;
+				d[1]=V0;
+				d[2]=V0;
+
+				e[0]=V1;
+				e[1]=V1;
+				e[2]=V1;
+
+				f[0]=V2;
+				f[1]=V2;
+				f[2]=V2;
+
+
+				dotp(a,b,c,d,e,f,o);
+
+				Rez0T=(int)o[0];
+				Rez1T=(int)o[1];
+				Rez2T=(int)o[2];
 
 
 				/*OPTIMIZABLE*/
-				Rez0T=(int)((M00*V0+M01*V1+M02*V2)/65536.0);
+/*				Rez0T=(int)((M00*V0+M01*V1+M02*V2)/65536.0);
 				Rez1T=(int)((M10*V0+M11*V1+M12*V2)/65536.0);
-				Rez2T=(int)((M20*V0+M21*V1+M22*V2)/65536.0);
+				Rez2T=(int)((M20*V0+M21*V1+M22*V2)/65536.0);*/
 				//printf("#Matrix CMD2, R0=0x%8.8X, R1=0x%8.8X, R2=0x%8.8X\n",Rez0,Rez1,Rez2);
 				return;
 

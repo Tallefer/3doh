@@ -76,6 +76,9 @@ enum ScalingAlgorithm
 	HQ4X = 3
 };
 
+//#define __fastcall 
+
+
 #pragma pack(pop)
 
 #define EXT_READ_ROMS           1
