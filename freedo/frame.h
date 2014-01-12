@@ -5,6 +5,10 @@
 
 void _frame_Init();
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 void Get_Frame_Bitmap(
 	VDLFrame* sourceFrame,
 	void* destinationBitmap,
@@ -15,8 +19,11 @@ void Get_Frame_Bitmap(
 	bool addBlackBorder,
 	bool copyPointlessAlphaByte,
 	bool allowCrop,
-	ScalingAlgorithm scalingAlgorithm,
+	enum ScalingAlgorithm scalingAlgorithm,
 	int* resultingWidth,
 	int* resultingHeight);
+#ifdef __cplusplus
+};
+#endif
 
 #endif 

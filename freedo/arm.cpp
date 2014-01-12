@@ -37,7 +37,11 @@ Felix Lazarev
 #ifdef _WIN32
 #include <mem.h>
 #else
+#ifndef DREAMCAST
 #include <memory.h>
+#else
+#include <string.h>
+#endif
 #endif
 
 
@@ -150,7 +154,7 @@ struct ARM_CoreState
 };
 #pragma pack(pop)
 
-static ARM_CoreState arm;
+ARM_CoreState arm;
 static int CYCLES;	//cycle counter
 
 unsigned int __fastcall rreadusr(unsigned int rn);
@@ -179,6 +183,15 @@ void __fastcall mwritew(unsigned int addr,unsigned int val);
 void* Getp_NVRAM(){return pNVRam;};
 void* Getp_ROMS(){return pRom;};
 void* Getp_RAMS(){return pRam;};
+
+//uint8* getpram(){return pRam;};
+uint8* getpram()
+{
+        return (uint8*)pRam;
+}
+
+
+
 
 unsigned int _arm_SaveSize()
 {
@@ -227,7 +240,7 @@ void _arm_Load(void *buff)
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-__inline void load(unsigned int rn, unsigned int val)
+static inline void load(unsigned int rn, unsigned int val)
 {
     RON_USER[rn]=val;
 }
@@ -505,7 +518,7 @@ void _arm_SetCPSR(unsigned int a)
 }
 
 
-__inline void SETM(unsigned int a)
+static inline void SETM(unsigned int a)
 {
 	if(arm_mode_table[a&0x1f]==ARM_MODE_UNK)
 	{
@@ -517,12 +530,12 @@ __inline void SETM(unsigned int a)
 }
 
 // This functions d'nt change mode bits, then need no update regcur
-__inline void SETN(bool a) { CPSR=(CPSR&0x7fffffff)|((a?1<<31:0)); }
-__inline void SETZ(bool a) { CPSR=(CPSR&0xbfffffff)|((a?1<<30:0)); }
-__inline void SETC(bool a) { CPSR=(CPSR&0xdfffffff)|((a?1<<29:0)); }
-__inline void SETV(bool a) { CPSR=(CPSR&0xefffffff)|((a?1<<28:0)); }
-__inline void SETI(bool a) { CPSR=(CPSR&0xffffff7f)|((a?1<<7:0)); }
-__inline void SETF(bool a) { CPSR=(CPSR&0xffffffbf)|((a?1<<6:0)); }
+static inline void SETN(bool a) { CPSR=(CPSR&0x7fffffff)|((a?1<<31:0)); }
+static inline void SETZ(bool a) { CPSR=(CPSR&0xbfffffff)|((a?1<<30:0)); }
+static inline void SETC(bool a) { CPSR=(CPSR&0xdfffffff)|((a?1<<29:0)); }
+static inline void SETV(bool a) { CPSR=(CPSR&0xefffffff)|((a?1<<28:0)); }
+static inline void SETI(bool a) { CPSR=(CPSR&0xffffff7f)|((a?1<<7:0)); }
+static inline void SETF(bool a) { CPSR=(CPSR&0xffffffbf)|((a?1<<6:0)); }
 
 
 ///////////////////////////////////////////////////////////////
@@ -538,12 +551,12 @@ __inline void SETF(bool a) { CPSR=(CPSR&0xffffffbf)|((a?1<<6:0)); }
 #define ISF  ((CPSR>>6)&1)
 
 
-__inline uint32 _bswap(uint32 x)
+static inline uint32 _bswap(uint32 x)
 {
 	return (x>>24) | ((x>>8)&0x0000FF00L) | ((x&0x0000FF00L)<<8) | (x<<24);
 }
 
-__inline uint32 _rotr(uint32 val, uint32 shift)
+static inline uint32 _rotr(uint32 val, uint32 shift)
 {
         if(!shift)return val;
         return (val>>shift)|(val<<(32-shift));
@@ -555,6 +568,7 @@ unsigned char * _arm_Init()
 
 	MAS_Access_Exept=false;
 
+#ifndef DREAMCAST
         profiling=new uint32[(1024*1024*3)>>2];
         memset(profiling,0,RAMSIZE);
 
@@ -563,6 +577,7 @@ unsigned char * _arm_Init()
 
 		profiling3=new uint32[(1024*1024*3)>>2];
         memset(profiling3,0,RAMSIZE);
+#endif
 
 	CYCLES=0;
     for(i=0;i<16;i++)
@@ -578,13 +593,25 @@ unsigned char * _arm_Init()
         RON_CASH[i]=RON_FIQ[i]=0;
 
 	gSecondROM=0;
-	pRam=new uint8[RAMSIZE+1024*1024*16];
+
+#ifdef DREAMCAST
+	pRam=new uint8[RAMSIZE];
 	pRom=new uint8[ROMSIZE*2];
 	pNVRam=new uint8[NVRAMSIZE];
 
-    memset( pRam, 0, RAMSIZE+1024*1024*16);
+    memset( pRam, 0, RAMSIZE);
+    memset( pRom, 0, ROMSIZE);
+    memset( pNVRam,0, NVRAMSIZE);
+#else
+	pRam=new uint8[RAMSIZE];  /*3doh fix - wrong ramsize???? */
+	pRom=new uint8[ROMSIZE*2];
+	pNVRam=new uint8[NVRAMSIZE];
+
+    memset( pRam, 0, RAMSIZE); /*3doh fix - wrong ramsize???? */
     memset( pRom, 0, ROMSIZE*2);
     memset( pNVRam,0, NVRAMSIZE);
+
+#endif
     gFIQ=false;
 
 	io_interface(EXT_READ_NVRAM,pNVRam);//_3do_LoadNVRAM(pNVRam);
@@ -812,7 +839,7 @@ void __fastcall  bdt_core(unsigned int opc)
 	else base=RON_USER[rn_ind];
 
 
-        if(opc&(1<<20))	//memory or register?
+    if(opc&(1<<20))	//memory or register?
 	{
 		if(opc&0x8000)CYCLES-=SCYCLE+NCYCLE;
 
@@ -861,7 +888,7 @@ void ARM_SET_C(uint32 x)
 #define ARM_SET_N(x)    (CPSR=((CPSR&0x7fffffff)|((x)&0x80000000)))
 #define ARM_GET_C       ((CPSR>>29)&1)
 
-__inline void ARM_SET_ZN(uint32 val)
+static inline void ARM_SET_ZN(uint32 val)
 {
         if(val)
                 CPSR=((CPSR&0x3fffffff)|(val&0x80000000));
@@ -869,7 +896,7 @@ __inline void ARM_SET_ZN(uint32 val)
                 CPSR=((CPSR&0x3fffffff)|0x40000000);
 }
 
-__inline void ARM_SET_CV(uint32 rd, uint32 op1, uint32 op2)
+static inline void ARM_SET_CV(uint32 rd, uint32 op1, uint32 op2)
 {
     //old_C=(CPSR>>29)&1;
 
@@ -879,7 +906,7 @@ __inline void ARM_SET_CV(uint32 rd, uint32 op1, uint32 op2)
 
 }
 
-__inline void ARM_SET_CV_sub(uint32 rd, uint32 op1, uint32 op2)
+static inline void ARM_SET_CV_sub(uint32 rd, uint32 op1, uint32 op2)
 {
     //old_C=(CPSR>>29)&1;
 
@@ -969,6 +996,7 @@ bool __fastcall ARM_ALU_Exec(uint32 inst, uint8 opc, uint32 op1, uint32 op2, uin
         ARM_SET_CV_sub(*Rd,op1,op2);
         break;
    case 7:
+
         *Rd=op2-op1;
         ARM_SET_ZN(*Rd);
         ARM_SET_CV_sub(*Rd,op2,op1);
@@ -1177,22 +1205,31 @@ void __fastcall ARM_SWAP(uint32 cmd)
     }
 }
 
+
+/*3doh fix - check out if it works fine*/
 unsigned int calcbits(unsigned int num)
 {
- unsigned int retval;
-
+// unsigned int retval;
+// printf("calcbits %x\n",num);
+// 1111111122222222233333333
  if(!num)return 1;
 
- if(num>>16){num>>=16;retval=16;}
- else retval=0;
+// if(num>>16){num>>=16;retval=16;}
+	if((num&0xFFFF0000)&&(num&0x0000FFFF))return 32; //3doh fix
+	else return 0;	
+ //else retval=0;
 
- if(num>>8){num>>=8;retval+=8;}
+/* if(num>>8){num>>=8;retval+=8;}
  if(num>>4){num>>=4;retval+=4;}
  if(num>>2){num>>=2;retval+=2;}
- if(num>>1){num>>=1;retval+=2;}
+ if(num>>1){num>>=1;retval+=2;}*/
+/* if(num&0x0000FFFF){num>>=8;retval+=8;}
+ if(num&0x000000FF){num>>=4;retval+=4;}
+ if(num&0x0000000F){num>>=2;retval+=2;}
+ if(num&0x00000003){num>>=1;retval+=2;}
  else if(num)retval++;
 
- return retval;
+ return retval;*/
 }
 
 unsigned int curr_pc;
@@ -1209,7 +1246,7 @@ int __fastcall _arm_Execute()
     uint32 cmd,pc_tmp;
 
 	//for(; CYCLES>0; CYCLES-=SCYCLE)
-	{
+//	{
  		cmd=mreadw(REG_PC);
 
                 #ifdef DEBUG_CORE
@@ -1233,6 +1270,11 @@ int __fastcall _arm_Execute()
 //			printf("%d\n",(cmd>>24)&0xf);
 			switch((cmd>>24)&0xf)  //разбор типа команды
 			{
+			case 0x8:	//Block Data Transfer
+			case 0x9:
+				bdt_core(cmd);
+				break;
+
 			case 0x0:	//Multiply
 
 					if ((cmd & ARM_MUL_MASK) == ARM_MUL_SIGN)
@@ -1246,25 +1288,25 @@ int __fastcall _arm_Execute()
 						if(((cmd>>16)&0xf)==(cmd&0xf))
 						{
 							if (cmd&(1<<21))
-                                                        {
-                                                                REG_PC+=8;
-                                                                res=RON_USER[(cmd>>12)&0xf];
-                                                                REG_PC-=8;
-                                                        }
-                                                        else
-                                                                res=0;
+                            {
+                            	REG_PC+=8;
+                            	res=RON_USER[(cmd>>12)&0xf];
+                                REG_PC-=8;
+                            }
+                            else
+                                res=0;
 						}
 						else
 						{
 							if (cmd&(1<<21))
-                                                        {
-                                                                res=RON_USER[cmd&0xf]*RON_USER[(cmd>>8)&0xf];
-                                                                REG_PC+=8;
-                                                                res+=RON_USER[(cmd>>12)&0xf];
-                                                                REG_PC-=8;
-                                                        }
-                                                        else
-                                                                res=RON_USER[cmd&0xf]*RON_USER[(cmd>>8)&0xf];
+                            {
+                            	res=RON_USER[cmd&0xf]*RON_USER[(cmd>>8)&0xf];
+                                REG_PC+=8;
+                                res+=RON_USER[(cmd>>12)&0xf];
+                                REG_PC-=8;
+                            }
+                            else
+                                res=RON_USER[cmd&0xf]*RON_USER[(cmd>>8)&0xf];
 						}
 						if(cmd&(1<<20))
 						{
@@ -1309,6 +1351,7 @@ int __fastcall _arm_Execute()
 									if(cmd&(1<<4))
 									{
 										shift=((cmd>>8)&0xf);
+
 										shift=(RON_USER[shift])&0xff;
                                                                                 REG_PC+=4;
 										op2=RON_USER[cmd&0xf];
@@ -1486,28 +1529,7 @@ int __fastcall _arm_Execute()
                 }
                 else goto Undefine;
 
-			case 0x8:	//Block Data Transfer
-			case 0x9:
 
-				  bdt_core(cmd);
-				  /*if(MAS_Access_Exept)
-				  {
-							//sprintf(str,"*PC: 0x%8.8X DataAbort!!!\n",REG_PC);
-							//CDebug::DPrint(str);
-							//!!Exeption!!
-
-							SPSR[arm_mode_table[0x17]]=CPSR;
-							SETI(1);
-							SETM(0x17);
-							load(14,REG_PC+4);
-							REG_PC=0x00000010;
-							CYCLES-=SCYCLE+NCYCLE;
-							MAS_Access_Exept=false;
-							break;
-				  } */
-
-
-				break;
 
 			case 0xa:	//BRANCH
 			case 0xb:
@@ -1560,7 +1582,7 @@ int __fastcall _arm_Execute()
 					REG_PC=0x0000001c;//1c
 			}
 
-	} // for(CYCLES)
+//	} // for(CYCLES)
 
 
 	return -CYCLES;
@@ -1570,26 +1592,29 @@ int __fastcall _arm_Execute()
 void __fastcall _mem_write8(unsigned int addr, unsigned char val)
 {
 	    pRam[addr]=val;
-	    if(addr<0x200000 || !RESSCALE) return;
-        pRam[addr+1024*1024]=val;
-        pRam[addr+2*1024*1024]=val;
-        pRam[addr+3*1024*1024]=val;
+		return;
+	//    if(addr<0x200000 || !RESSCALE) return;
+    //    pRam[addr+1024*1024]=val;
+//        pRam[addr+2*1024*1024]=val;  //3doh fix
+//        pRam[addr+3*1024*1024]=val;  //3doh fix
 }
 void __fastcall _mem_write16(unsigned int addr, unsigned short val)
 {
         *((unsigned short*)&pRam[addr])=val;
-        if(addr<0x200000 || !RESSCALE) return;
-        *((unsigned short*)&pRam[addr+1024*1024])=val;
-        *((unsigned short*)&pRam[addr+2*1024*1024])=val;
-        *((unsigned short*)&pRam[addr+3*1024*1024])=val;
+		return;
+    //    if(addr<0x200000 || !RESSCALE) return;
+    //    *((unsigned short*)&pRam[addr+1024*1024])=val;
+//        *((unsigned short*)&pRam[addr+2*1024*1024])=val;  //3doh fix
+//        *((unsigned short*)&pRam[addr+3*1024*1024])=val;  //3doh fix
 }
 void __fastcall _mem_write32(unsigned int addr, unsigned int val)
 {
 	    *((unsigned int*)&pRam[addr])=val;
-        if(addr<0x200000 || !RESSCALE) return;
-        *((unsigned int*)&pRam[addr+1024*1024])=val;
-        *((unsigned int*)&pRam[addr+2*1024*1024])=val;
-        *((unsigned int*)&pRam[addr+3*1024*1024])=val;
+		return; //3doh
+     //3doh   if(addr<0x200000 || !RESSCALE) return;
+     //3doh   *((unsigned int*)&pRam[addr+1024*1024])=val;
+//        *((unsigned int*)&pRam[addr+2*1024*1024])=val;  //3doh fix
+//        *((unsigned int*)&pRam[addr+3*1024*1024])=val;  //3doh fix
 }
 
 unsigned short __fastcall _mem_read16(unsigned int addr)
@@ -1600,7 +1625,13 @@ unsigned int __fastcall _mem_read32(unsigned int addr)
 {
         return *((unsigned int*)&pRam[addr]);
 }
-unsigned char __fastcall _mem_read8(unsigned int addr)
+static inline unsigned char _mem_read8(unsigned int addr)
+{
+        return pRam[addr];
+}
+
+unsigned char memread8(unsigned int addr)
+//unsigned char _mem_read8(unsigned int addr)
 {
         return pRam[addr];
 }
@@ -1612,14 +1643,20 @@ void __fastcall mwritew(unsigned int addr, unsigned int val)
     //to do -- add proper loging
     unsigned int index;
 
-	addr&=~3;
-
-
     if (addr<0x00300000) //dram1&dram2&vram
     {
         _mem_write32(addr,val);
         return;
     }
+
+	addr&=~3;
+
+
+/*    if (addr<0x00300000) //dram1&dram2&vram
+    {
+        _mem_write32(addr,val);
+        return;
+    }*/
 
     if (!((index=(addr^0x03300000)) & ~0x7FF)) //madam
 //  if((addr & ~0xFFFFF)==0x03300000) //madam
@@ -1681,14 +1718,21 @@ unsigned int __fastcall mreadw(unsigned int addr)
     unsigned int val;
     int index;
 
-	addr&=~3;
-
-
-
+	/*prueba*/
     if (addr<0x00300000) //dram1&dram2&vram
     {
-		return _mem_read32(addr);
+		//return _mem_read32(addr);
+		return *((unsigned int*)&pRam[addr]);
     }
+
+	addr&=~3;
+
+/*    if (addr<0x00300000) //dram1&dram2&vram
+    {
+		return _mem_read32(addr);
+    }*/
+
+
 
     if (!((index=(addr^0x03300000)) & ~0xFFFFF)) //madam
     {

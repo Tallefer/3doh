@@ -26,7 +26,11 @@ Felix Lazarev
 //////////////////////////////////////////////////////////////////////
 #include <stdint.h>
 #include "freedoconfig.h"
+#ifndef DREAMCAST
 #include <memory.h>
+#else
+#include <string.h>
+#endif
 #include "IsoXBUS.h"
 #include "types.h"
 

@@ -82,7 +82,11 @@ static CLIODatum clio;
 #define FIFOI clio.FIFOI
 #define FIFOO clio.FIFOO
 
+#ifndef DREAMCAST
 #include <memory.h>
+#else
+#include <string.h>
+#endif
 unsigned int _clio_SaveSize()
 {
         return sizeof(CLIODatum);

@@ -34,7 +34,9 @@ uint32 BitReaderBig::Read()
  	if(!buf)return retval;
  	if((8-bitpoint)>bitset)
  	{
- 		retval=_mem_read8(buf+(point^3));
+ 		retval=memread8(buf+(point^3));
+// 		retval=memread8(buf+(point^3));
+// 		retval=((uint32)&pram[buf+(point^3)]);
  		retval>>=8-bitpoint-bitset;
  		retval&=mas[bitset];
  		bitpoint+=bitset;
@@ -42,21 +44,24 @@ uint32 BitReaderBig::Read()
  	}
  	if(bitpoint)
  	{
- 		retval=_mem_read8(buf+(point^3))&mas[8-bitpoint];
+ 		retval=memread8(buf+(point^3))&mas[8-bitpoint];
+ 	//	retval=(uint32)&pram[buf+(point^3)]&mas[8-bitpoint];
 		point++;
  		bitcnt-=8-bitpoint;
  	}
  	while(bitcnt>=8)
  	{
 		retval<<=8;
- 		retval|=_mem_read8(buf+(point^3));
+ 		retval|=memread8(buf+(point^3));
+// 		retval|=((uint32)&pram[buf+(point^3)]);
         point++;
  		bitcnt-=8;
  	}
  	if(bitcnt)
  	{
 		retval<<=bitcnt;
- 		retval|=_mem_read8(buf+(point^3))>>(8-bitcnt); 		
+ 		retval|=memread8(buf+(point^3))>>(8-bitcnt); 		
+// 		retval|=(uint32)&pram[buf+(point^3)]>>(8-bitcnt); 		
  	}
  	bitpoint=bitcnt;
 

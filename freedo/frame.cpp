@@ -26,6 +26,8 @@ void _frame_Init()
 	}
 }
 
+extern "C"
+{
 void Get_Frame_Bitmap(
 	VDLFrame* sourceFrame,
 	void* destinationBitmap,
@@ -147,6 +149,7 @@ void Get_Frame_Bitmap(
 	*resultingWidth = copyWidth * cropAdjust;
 	*resultingHeight = copyHeight * cropAdjust;
 }
+};
 
 void setCurrentAlgorithm(int algorithm)
 {

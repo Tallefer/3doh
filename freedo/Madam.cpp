@@ -31,7 +31,11 @@ Felix Lazarev
 #include "vdlp.h"
 #include "arm.h"
 #include <math.h>
+#ifndef DREAMCAST
 #include <memory.h>
+#else
+#include <string.h>
+#endif
 
 #include "bitop.h"
 BitReaderBig bitoper;
@@ -2528,19 +2532,30 @@ int __fastcall TexelDraw_Arbitrary(unsigned short CURPIX, unsigned short LAMV, i
 	unsigned int pixel;
 	unsigned int curr=-1, next;
 
-                                         xA>>=(16-RESSCALE);
+                                      /*   xA>>=(16-RESSCALE);
                                          xB>>=(16-RESSCALE);
                                          xC>>=(16-RESSCALE);
                                          xD>>=(16-RESSCALE);
                                          yA>>=(16-RESSCALE);
                                          yB>>=(16-RESSCALE);
                                          yC>>=(16-RESSCALE);
-                                         yD>>=(16-RESSCALE);
+                                         yD>>=(16-RESSCALE);*/
+  									     xA>>=(16);
+                                         xB>>=(16);
+                                         xC>>=(16);
+                                         xD>>=(16);
+                                         yA>>=(16);
+                                         yB>>=(16);
+                                         yC>>=(16);
+                                         yD>>=(16);
 
                                          if((xA)==(xB) && (xB)==(xC) && (xC)==(xD)) return 0;
 
-                                         maxxt=((CLIPXVAL+1)<<RESSCALE);
-                                         maxyt=((CLIPYVAL+1)<<RESSCALE);
+                                /*         maxxt=((CLIPXVAL+1)<<RESSCALE);
+                                         maxyt=((CLIPYVAL+1)<<RESSCALE);*/
+
+                                         maxxt=((CLIPXVAL+1));
+                                         maxyt=((CLIPYVAL+1));
 
                                          if(HDX1616<0 && HDDX1616<0)
                                          {

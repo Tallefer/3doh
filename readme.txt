@@ -13,7 +13,7 @@ A libre (GPL) 3do emulator for GNU/Linux, built around SDL for audio, video and 
 
 2. Usage
 ========
-in command line run: 3doemu -b biosfile -i isofile
+in command line run: 3doh -b biosfile -i isofile
 
 
 3. Building from source
@@ -24,6 +24,12 @@ To build from source, in command line just type 'make'. You will need the SDL li
 
 3. History:
 ===========
+12/01/2014: 
+	- Fixed some input code, now you can play with 5 more friends :)
+	- Fixed audio code, it was WRONG, now it's playing 44100 hz STEREO.
+	- Initial Dreamcast Port. Not tested yet in the real hardware, but it should work.
+	- Fixed some code in Freedo, resulting in lower RAM usage and a little speed improvement.
+
 - First Release: 
 	- Alpha release: unfinished work in progress, keyboard and joystick support. 
 

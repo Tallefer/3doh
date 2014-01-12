@@ -47,7 +47,11 @@ struct QDatum
 
 static QDatum quarz;
 
+#ifndef DREAMCAST
 #include <memory.h>
+#else
+#include <string.h>
+#endif
 unsigned int _qrz_SaveSize()
 {
         return sizeof(QDatum);

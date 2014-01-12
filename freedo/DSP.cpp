@@ -206,7 +206,11 @@ struct DSPDatum
 
 static DSPDatum dsp;
 
+#ifndef DREAMCAST
 #include <memory.h>
+#else
+#include <string.h>
+#endif
 
 unsigned int _dsp_SaveSize()
 {
@@ -425,7 +429,7 @@ void _Arithmetic_Debug(uint16 nrc, uint16 opmask)
     if(!NUMBER_OPERANDS && (ALU1_RQST_L || ALU2_RQST_L) )NUMBER_OPERANDS=4;
 
     //what if RQ is more than NUM_OPS????
-    if(NUMBER_OPERANDS<cnt)io_interface(EXT_DEBUG_PRINT,(void*)">>>DSP NUM_OPS_CONFLICT!!!\n");
+  //  if(NUMBER_OPERANDS<cnt)io_interface(EXT_DEBUG_PRINT,(void*)">>>DSP NUM_OPS_CONFLICT!!!\n");
 
 }
 
@@ -962,7 +966,7 @@ unsigned short __fastcall ireadh(unsigned int addr) //DSP IREAD (includes EI, I)
 }
 
 
-void __fastcall iwriteh(unsigned int addr, unsigned short val) //DSP IWRITE (includes EO,I)
+extern inline void __fastcall iwriteh(unsigned int addr, unsigned short val) //DSP IWRITE (includes EO,I)
 {
 	//unsigned short imem;
 	addr&=0x3ff;
@@ -1015,23 +1019,24 @@ void __fastcall iwriteh(unsigned int addr, unsigned short val) //DSP IWRITE (inc
 		*/
 
         addr-=0x100;
-		if(addr<0x200)
-		{
+//		if(addr<0x200)
+//		{
 			IMem[addr|0x100]=val;
-		}
-		else
-			IMem[addr+0x100]=val;
+//		}
+//		else
+//			IMem[addr+0x100]=val;
 		return;
 	}
 }
 
 
-
-void __fastcall _dsp_SetRunning(bool val)
+extern "C"
+{
+void __fastcall _dsp_SetRunning(int val)
 {
 	flags.Running= val;
 }
-
+};
 
 void __fastcall _dsp_WriteIMem(unsigned short addr, unsigned short val)//CPU writes to EI,I of DSP
 {
@@ -1089,6 +1094,7 @@ void __fastcall _dsp_WriteIMem(unsigned short addr, unsigned short val)//CPU wri
 	}
 
 }
+
 
 void __fastcall _dsp_ARMwrite2sema4(unsigned int val)
 {

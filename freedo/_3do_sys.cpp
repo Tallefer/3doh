@@ -47,6 +47,7 @@ extern void* Getp_NVRAM();
 extern void* Getp_ROMS();
 extern void* Getp_RAMS();
 
+
 __inline uint32 _bswap(uint32 x)
 {
 	return (x>>24) | ((x>>8)&0x0000FF00L) | ((x&0x0000FF00L)<<8) | (x<<24);
@@ -54,6 +55,11 @@ __inline uint32 _bswap(uint32 x)
 
 
 extern void* _xbplug_MainDevice(int proc, void* data);
+
+#ifdef DREAMCAST
+extern "C"
+{
+#endif
 int _3do_Init()
 {
  unsigned char *Memory;
@@ -64,7 +70,6 @@ int _3do_Init()
         io_interface(EXT_READ_ROMS,Getp_ROMS());
         rom=(unsigned char*)Getp_ROMS();
         for(int i=(1024*1024*2)-4;i>=0;i-=4) *(int *)(rom+i)=_bswap(*(int *)(rom+i));
-
 	_vdl_Init(Memory+0x200000);   // Visible only VRAM to it
 	_sport_Init(Memory+0x200000);  // Visible only VRAM to it
 	_madam_Init(Memory);
@@ -108,7 +113,9 @@ FF	TEST END (halt)
 
         return 0;
 }
-
+#ifdef DREAMCAST
+};
+#endif
 
 VDLFrame *curr_frame;
 bool scipframe;
@@ -133,7 +140,7 @@ void _3do_InternalFrame(int cicles)
 
 
                 if(_qrz_QueueTimer())_clio_DoTimers();
-				time_end=SDL_GetTicks();
+//				time_end=SDL_GetTicks();
 
 
                 if(_qrz_QueueVDL())
@@ -180,10 +187,11 @@ int i,cnt=0;
         {
 // time_start=SDL_GetTicks();
                 if(Get_madam_FSM()==FSM_INPROCESS)
+               // if(mfsm==FSM_INPROCESS)
                 {
-			_madam_HandleCEL();
-		        Set_madam_FSM(FSM_IDLE);
-                        continue;
+			    	_madam_HandleCEL();
+		        	Set_madam_FSM(FSM_IDLE);
+                    continue;
                 }
 
                 cnt+=_arm_Execute();   

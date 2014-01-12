@@ -1,21 +1,43 @@
+/*
+    This file is part of 3d'oh, a multiplatform 3do emulator written by Gabriel Ernesto Cabral.
+
+    3d'oh is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    3d'oh is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with 3d'oh.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <SDL/SDL.h>
+//#include <SDL/SDL.h>
 #include "freedocore.h"
-#include "frame.h"
 #include "common.h"
-#include "sound.h"
-#include "video.h"
-#include "cdrom.h"
-#include "input.h"
-#include "config.h"
+#include "timer.h"
+
+
+#ifdef DREAMCAST
+#include "kos.h"
+extern uint8 romdisk[];
+KOS_INIT_FLAGS(INIT_DEFAULT | INIT_MALLOCSTATS);
+KOS_INIT_ROMDISK(romdisk);
+#endif
 
 
 char* pNVRam;
 extern _ext_Interface  io_interface;
 _ext_Interface  fd_interface;
-SDL_Event event;
+//SDL_Event event;
 int onsector=0;
 char biosFile[100];
 char imageFile[100];
@@ -24,9 +46,11 @@ bool __temporalfixes;
 int HightResMode;
 int __tex__scaler;
 
+int count_samples=0;
+
 int initEmu(int xres,int yres, int bpp, int armclock);
 
-UInt32 ReverseBytes(UInt32 value)
+uint32 ReverseBytes(uint32 value)
 {
 			return (value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 |
 				   (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24;
@@ -46,17 +70,18 @@ void readNvRam(void *pnvram)
 			////////////////
 			// Fill out the volume header.
 			nvramStruct->recordType = 0x01;
-			for (int x = 0; x < 5; x++) nvramStruct->syncBytes[x] = (char)'Z';
+			int x;
+			for (x = 0; x < 5; x++) nvramStruct->syncBytes[x] = (char)'Z';
 			nvramStruct->recordVersion = 0x02;
 			nvramStruct->flags = 0x00;
-			for (int x = 0; x < 32; x++) nvramStruct->comment[x] = 0;
+			for (x = 0; x < 32; x++) nvramStruct->comment[x] = 0;
 
 			nvramStruct->label[0] = (char)'n';
 			nvramStruct->label[1] = (char)'v';
 			nvramStruct->label[2] = (char)'r';
 			nvramStruct->label[3] = (char)'a';
 			nvramStruct->label[4] = (char)'m';
-			for (int x = 5; x < 32; x++) nvramStruct->label[x] = 0;
+			for (x = 5; x < 32; x++) nvramStruct->label[x] = 0;
 
 			nvramStruct->id         = ReverseBytes(0xFFFFFFFF);
 			nvramStruct->blockSize  = ReverseBytes(0x00000001); // Yep, one byte per block.
@@ -68,7 +93,7 @@ void readNvRam(void *pnvram)
 			nvramStruct->lastRootDirCopy  = ReverseBytes(0x00000000);
 
 			nvramStruct->rootDirCopies[0] = ReverseBytes(0x00000084);
-			for (int x = 1; x < 8; x++) nvramStruct->rootDirCopies[x] = 0;
+			for (x = 1; x < 8; x++) nvramStruct->rootDirCopies[x] = 0;
 
 			////////////////
 			// After this point, I could not find the proper structure for the data.
@@ -100,24 +125,7 @@ void readNvRam(void *pnvram)
 
 void loadRom1(void *prom)
 {
-	FILE* bios1;
-	long fsize;
-	int readcount;
-
-	printf("INFO: loading bios in %s\n",biosFile);
-	bios1=fopen(biosFile,"rb");
-	if (bios1==NULL)printf("ERROR: Bios load error\n");
-	printf("INFO: Bios load success\n");
-    fseek (bios1 , 0 , SEEK_END);
-	fsize = ftell(bios1);
-	rewind (bios1);
-
-	readcount=fread(prom,1,fsize,bios1);
-	fclose(bios1);
-
-
-//	return buffer;
-
+	fsReadBios(biosFile, prom);
 
 }
 
@@ -129,7 +137,7 @@ void *swapFrame(void *curr_frame)
 	
 }
 
-void * emuinterface(int procedure, void *datum=0)
+void * emuinterface(int procedure, void *datum)
 {
 	typedef void *(*func_type)(void);
 	void *therom;
@@ -139,10 +147,10 @@ void * emuinterface(int procedure, void *datum=0)
 		loadRom1(datum);
 		break;
 	case EXT_READ2048:
-	cdromReadBlock(datum,onsector);
+	fsReadBlock(datum,onsector);
 		break;
 	case EXT_GET_DISC_SIZE:
-		return (void *) cdromDiscSize();
+		return (void *) fsReadDiscSize();
 		break;
 	case EXT_ON_SECTOR:
 		onsector=*((int*)&datum);
@@ -190,11 +198,20 @@ void readConfiguration()
 int main(int argc, char *argv[])
 {
 
+
+	printf("3d'oh! MAIN\n");
+
 	int biosset=0;
 	int imageset=0;
+	fsInit();
+#ifdef DREAMCAST
 
+
+	chdir("/rd");
+#endif
 	readConfiguration();	
 
+#ifndef DREAMCAST
 	if(argc>1){
 
 
@@ -223,12 +240,22 @@ int main(int argc, char *argv[])
 		/*free resources*/
 		fd_interface(FDP_DESTROY,(void *)0);
 		soundClose();
-		SDL_Quit();
+		fsClose();
+//		SDL_Quit();
 	}else{
 
 		printf("3d'oh! - a 3do emulator\nUsage 3doemu -b biosfile -i isofile\n");
 
 	}
+#else
+		sprintf(biosFile,"bios/bios.bin");
+		sprintf(imageFile,"games/game.iso");
+		initEmu(640,480,32,12500000);
+		fd_interface(FDP_DESTROY,(void *)0);
+		soundClose();
+//		SDL_Quit();
+
+#endif
 
 
 	return 0;
@@ -257,8 +284,7 @@ int initEmu(int xres,int yres, int bpp, int armclock)
 	soundInit();
 	inputInit();
 
-
-	if(!cdromOpenIso(imageFile)) return 0;
+	if(!fsOpenIso(imageFile)) return 0;
 
 
 //init freedo core
@@ -272,6 +298,7 @@ int initEmu(int xres,int yres, int bpp, int armclock)
 	fd_interface(FDP_SET_TEXQUALITY,(void *)tex_quality);
 //	io_interface(FDP_INIT,0);
 //	profile=io_interface(FDP_GETP_PROFILE,0);
+
 	_3do_Init();
 
 	int frame_end,framerate;
@@ -279,44 +306,30 @@ int initEmu(int xres,int yres, int bpp, int armclock)
 	int frame_start=0;
 	int frames=0;
 	int debug=0;
-	time_start=SDL_GetTicks();
+	time_start = timerGettime();
 	while(!quit){
 
-	frame_start=SDL_GetTicks();
-
-
-//		printf("profile %d\n",&profile);
-
-//		printf("framerate1:%d\n",framerate);
-
-
-	
 
 		videoFlip();
 		soundRun();
 
-
 		quit = inputQuit();
-		frame_end=SDL_GetTicks();
-		framerate=frame_end-frame_start;
-		if(framerate<17)SDL_Delay(17-framerate);
-		frames++;
-		if(framerate>20){
-			debug++;
-		}
+	frame_end=timerGettime();
+	frames++;
+
 		if((frame_end-time_start)>=1000) 
 		{
 
-			printf("framerate:%d fps times:%d\n",frames,debug);
+			printf("framerate:%d fps samples:%d\n",frames,count_samples);
 			frames=0;
-			debug=0;
-			time_start=SDL_GetTicks();
+			count_samples=0;
+			time_start = timerGettime();
 			
 
 		}
 
 	}
 
-	SDL_Quit();
+
 	return 1;
 }

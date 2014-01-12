@@ -27,7 +27,11 @@ Felix Lazarev
 //------------------------------------------------------------------------------
 #pragma pack(push,1)
 
-struct VDLLine
+#ifdef DREAMCAST
+#define bool int
+#endif
+
+typedef struct 
 //VDLP Line - one VDLP line per patent
 {
 	unsigned short line[320*4];//,line2[320*2*16];
@@ -37,22 +41,23 @@ struct VDLLine
 	unsigned int xOUTCONTROLL;
 	unsigned int xCLUTDMA;
 	unsigned int xBACKGROUND;
-};
-struct VDLFrame
+}VDLLine;
+
+typedef struct 
 {
 	VDLLine lines[240*4];
 	unsigned int srcw,srch;
-};
+}VDLFrame;
 
-struct BitmapCrop
+typedef struct 
 {
 	int left;
 	int top;
 	int bottom;
 	int right;
-};
+}BitmapCrop;
 
-struct GetFrameBitmapParams
+typedef struct 
 {
 	VDLFrame* sourceFrame;
 	void* destinationBitmap;
@@ -66,7 +71,7 @@ struct GetFrameBitmapParams
 	int scalingAlgorithm;
 	int resultingWidth;
 	int resultingHeight;
-};
+}GetFrameBitmapParams;
 
 enum ScalingAlgorithm
 {
@@ -141,10 +146,14 @@ typedef void* (*_ext_Interface)(int, void*);
 
 #endif
 
+#ifdef __cplusplus
 extern "C"
 {
 	FREEDOCORE_API void* _freedo_Interface(int procedure, void *datum=0);
 };
+#else
+	FREEDOCORE_API void* _freedo_Interface(int procedure, void *datum);
+#endif
 
 #ifdef __MSVC__
 #ifndef FREEDOCORE_EXPORTS

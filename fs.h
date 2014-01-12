@@ -16,9 +16,31 @@
 
 */
 
+#ifndef FS_H_
+#define FS_H_
 
 
-int  soundInit();
-void soundFillBuffer(unsigned int dspLoop);
-void soundRun();
-void soundClose();
+#ifdef DREAMCAST
+	#include "fatfs/fs_fat.h"
+	#include <dc/sd.h>
+	#include <kos/blockdev.h>
+	#include <ext2/fs_ext2.h>
+#else
+
+#endif
+
+
+/*init and close functions*/
+int fsInit();
+int fsClose();
+
+/*cdrom related functions*/
+int fsOpenIso(char *path);
+int fsReadBlock(void *buffer,int sector);
+int fsCloseIso();
+unsigned int fsReadDiscSize();
+
+/*bios related functions*/
+void fsReadBios(char *biosFile, void *prom);
+
+#endif

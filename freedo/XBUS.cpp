@@ -267,7 +267,11 @@ unsigned int _xbus_SaveSize()
         return tmp;
 }
 
+#ifndef DREAMCAST
 #include <memory.h>
+#else
+#include <string.h>
+#endif
 
 void _xbus_Save(void *buff)
 {
