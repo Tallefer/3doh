@@ -52,11 +52,10 @@ void timerSetFramerate(int framespersecond)
 }
 
 
-void SE_timer_waitframerate()
+void SE_timer_waitframerate(int millis)
 {
-	int ftime;
-	int start=SDL_GetTicks();
-	SDL_Delay(fps);
+
+	SDL_Delay(millis);
 
 }
 

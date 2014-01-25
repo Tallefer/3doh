@@ -3,8 +3,8 @@ CC = g++
 DEBUG =
 SDL_CFLAGS := $(shell sdl-config --cflags)
 SDL_LDFLAGS := $(shell sdl-config --libs)
-CFLAGS = -O3 -msse3 -mfpmath=sse -march=native -ftree-vectorize -flto -fomit-frame-pointer -funsafe-loop-optimizations -funsafe-math-optimizations -ffinite-math-only -fno-trapping-math -frounding-math -fsingle-precision-constant -Wall -Winline $(SDL_CFLAGS) -I./ -I./freedo -I./freedo/filters
-OCFLAGS = -DUSEGL -g -Wall $(SDL_CFLAGS) -I./ -I./freedo -I./freedo/filters -fno-omit-frame-pointer
+CFLAGS = -O3 -msse3 -mfpmath=sse -march=native -finline-functions -ftree-vectorize -flto -fomit-frame-pointer -funsafe-loop-optimizations -funsafe-math-optimizations -ffinite-math-only -fno-trapping-math -frounding-math -fsingle-precision-constant -Wall -Winline $(SDL_CFLAGS) -I./ -I./freedo -I./freedo/filters
+OCFLAGS = -g -O2 -Wall $(SDL_CFLAGS) -I./ -I./freedo -I./freedo/filters -fno-omit-frame-pointer
 LFLAGS = -Wall $(DEBUG)
 LIBS = $(SDL_LDFLAGS) -lm  -lGL -lGLU -L/usr/lib/gcc/i486-linux-gnu/4.7 -L/usr/lib -lstdc++ 
 
@@ -21,10 +21,6 @@ freedo/DSP.o \
 freedo/Iso.o \
 freedo/SPORT.o \
 freedo/XBUS.o \
-freedo/filters/hq2x.o \
-freedo/filters/hq3x.o \
-freedo/filters/hq4x.o \
-freedo/filters/hqx_init.o \
 video/opengl/video.o \
 sound/sdl/sound.o \
 fs/linux/cdrom.o \

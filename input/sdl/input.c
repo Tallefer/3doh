@@ -8,13 +8,16 @@
 
 
 SDL_Event eventjoy;
-inputState internal_input_state[6];
-int usekb=0;
 SDL_Joystick *joystick[6];
+inputState internal_input_state[6];
+inputMapping joystickmap[6];
+
+unsigned char *data;
+int usekb=0;
 int isexit=0;
 int fullscreen=0;
 
-inputMapping joystickmap[6];
+
 
 
 int inputMapButton(char *button)
@@ -100,7 +103,18 @@ int inputInit()
 	{
 		joystick[i]=inputOpen(i);
 	}
+
+	data=(unsigned char *)malloc(sizeof(unsigned char)*16);
+
 	return SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+
+}
+
+int inputClose()
+{
+	/* Close and clean everything related to input */
+	free(data);
+	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 
 }
 
@@ -119,12 +133,12 @@ SDL_Joystick *inputOpen(int joyid)
 int inputEnum()
 {
 	
-	if(usekb)return 1;
+	if(SDL_NumJoysticks()==0) return 1;
 	else return SDL_NumJoysticks();
 }
 
 
-void inputPoll(int deviceNumber)
+void inputPoll()
 {
 
 	//internal_internal_input_state[deviceNumber].buttons=0;
@@ -341,8 +355,7 @@ int inputLength()
 int CheckDownButton(int deviceNumber,int button)
 {
 
-//	printf("returnvalue %d %d\n",internal_input_state[deviceNumber],deviceNumber);
-	if(internal_input_state[deviceNumber].buttons&button)return 1;
+	if(internal_input_state[deviceNumber].buttons&button) return 1;
 	else return 0;
 	
 
@@ -393,12 +406,12 @@ unsigned char *inputRead()
 	int i=0;
 	int deviceCount=inputEnum();
 	
-	for(i=0;i<6;i++)
-	{
-		inputPoll(i);
-	}
+//	for(i=0;i<6;i++)
+//	{
+		inputPoll();
+//	}
 
-	unsigned char *data=(unsigned char *)malloc(sizeof(unsigned char)*16);
+
 	data[0x0] = 0x00;
 	data[0x1] = 0x48;
 	data[0x2] = CalculateDeviceLowByte(0);

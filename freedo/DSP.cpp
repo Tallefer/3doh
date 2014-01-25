@@ -433,124 +433,50 @@ void _Arithmetic_Debug(uint16 nrc, uint16 opmask)
 
 }
 
-
+union {
+	struct {
+		bool Zero;
+		bool Nega;
+		bool Carry;//not borrow
+		bool Over;
+	};
+	unsigned int raw;
+} Flags;
 
 unsigned int _dsp_Loop()
 {
-	unsigned int AOP, BOP;	//1st & 2nd operand
-	unsigned int Y;			//accumulator
+	unsigned int AOP, BOP=0;	//1st & 2nd operand
+	unsigned int Y=0;			//accumulator
+	unsigned int RBSR=0;	//return address
+	bool fExact=0;
+	bool Work=true;
 
-	unsigned int RBSR;	//return address
-
-	union {
-		struct {
-			bool Zero;
-			bool Nega;
-			bool Carry;//not borrow
-			bool Over;
-		};
-		unsigned int raw;
-	} Flags;
-	bool fExact;
-
-	bool Work;
-
-	if(flags.Running&1)
+	if(flags.Running)
 	{
 		_dsp_Reset();
 
 		Flags.raw=0;
-		fExact=0;
+//		fExact=0;
 
-		AOP=0;
-		BOP=0;
-		Y=0;
+//		AOP=0;
+//		BOP=0;
+//		Y=0;
 
-		RBSR=0;
+//		RBSR=0;
 
-		Work=true;
+//		Work=true;
+		ITAG inst;
 		do
 		{
-		  ITAG inst;
+//		  ITAG inst;
 
 			inst.raw=NMem[dregs.PC++];
 			//DSPCYCLES++;
 
-			if(inst.aif.PAD)
+//			if(inst.aif.PAD)
+			switch(inst.aif.PAD)
 			{//Control instruction
-				switch((inst.raw>>7)&255) //special
-					{
-					case 0://NOP TODO
-							break;
-					case 1://branch accum
-							dregs.PC=(Y>>16)&0x3ff;
-							break;
-					case 2://set rbase
-							RBASEx4=(inst.cif.BCH_ADDR&0x3f)<<2;
-							break;
-					case 3://set rmap
-							REGi=inst.cif.BCH_ADDR&7;
-							break;
-					case 4://RTS
-							dregs.PC=RBSR;
-							break;
-					case 5://set op_mask
-							flags.nOP_MASK=~(inst.cif.BCH_ADDR&0x1f);
-							break;
-					case 6:// -not used2- ins
-							break;
-					case 7://SLEEP
-							Work=false;
-							break;
-					case 8:  case 9:  case 10: case 11:
-					case 12: case 13: case 14: case 15:
-							//jump //branch only if not branched
-							dregs.PC=inst.cif.BCH_ADDR;
-							break;
-					case 16: case 17: case 18: case 19:
-					case 20: case 21: case 22: case 23:
-							//jsr
-							RBSR=dregs.PC;
-							dregs.PC=inst.cif.BCH_ADDR;
-							break;
-					case 24: case 25: case 26: case 27:
-					case 28: case 29: case 30: case 31:
-							// branch only if was branched
-							dregs.PC=inst.cif.BCH_ADDR;
-							break;
-					case 32: case 33: case 34: case 35:
-					case 36: case 37: case 38: case 39:
-					case 40: case 41: case 42: case 43: // ??? -not used- instr's
-					case 44: case 45: case 46: case 47: // ??? -not used- instr's
-							// MOVEREG
-							{
-								int Operand=OperandLoaderNWB();
-								if(inst.r2of.R1_DI)
-									iwriteh(ireadh(REGCONV[REGi][inst.r2of.R1]^RBASEx4),Operand);
-								else
-									iwriteh(REGCONV[REGi][inst.r2of.R1]^RBASEx4,Operand);
-							}
-							break;
-					case 48: case 49: case 50: case 51:
-					case 52: case 53: case 54: case 55:
-					case 56: case 57: case 58: case 59:
-					case 60: case 61: case 62: case 63:
-							// MOVE
-							{
-								int Operand=OperandLoaderNWB();
-								if(inst.nrof.DI)
-									iwriteh(ireadh(inst.cif.BCH_ADDR),Operand);
-								else
-									iwriteh(inst.cif.BCH_ADDR,Operand);
-							}
-							break;
-					default: // Coundition branch
-							if(1&BRCONDTAB[inst.br.bits][fExact+((Flags.raw*0x10080402)>>24)]) dregs.PC=inst.cif.BCH_ADDR;
-							break;
-				}//switch((inst.raw>>7)&255) //special
-			}
-			else //if(inst.aif.PAD)
-			{
+			case 0:
 				//ALU instruction
 
 				_Arithmetic_Debug(inst.raw, ~flags.nOP_MASK);
@@ -563,15 +489,32 @@ unsigned int _dsp_Loop()
 				switch(inst.aif.MUXA)
 				{
 				case 3:
-					if(inst.aif.M2SEL==0)
+//					if(inst.aif.M2SEL==0)
+					switch(inst.aif.M2SEL)
 					{
-						if((inst.aif.ALU==3)||(inst.aif.ALU==5)) // ACSBU signal
+					case 0:
+					switch(inst.aif.ALU)
+					{
+						case 3:
+						case 5:
+							AOP=Flags.Carry? ((int)flags.MULT1<<16)&ALUSIZEMASK : 0;
+							break;
+						default:
+							AOP=( ((int)flags.MULT1*(((signed int)Y>>15)&~1))&ALUSIZEMASK );
+							break;
+
+					};
+/*						if((inst.aif.ALU==3)||(inst.aif.ALU==5)) // ACSBU signal
 							AOP=Flags.Carry? ((int)flags.MULT1<<16)&ALUSIZEMASK : 0;
 						else
-							AOP=( ((int)flags.MULT1*(((signed int)Y>>15)&~1))&ALUSIZEMASK );
-					}
-					else
+							AOP=( ((int)flags.MULT1*(((signed int)Y>>15)&~1))&ALUSIZEMASK );*/
+//					}
+//					else
+						break;
+					default:
 						AOP=( ((int)flags.MULT1*(int)flags.MULT2*2)&ALUSIZEMASK );
+						break;
+					};
 					break;
 				case 1:
 					AOP=flags.ALU1<<16;
@@ -584,31 +527,42 @@ unsigned int _dsp_Loop()
 					break;
 				}
 
-				if((inst.aif.ALU==3)||(inst.aif.ALU==5)) // ACSBU signal
-				{
-					BOP=Flags.Carry<<16;
-				}
-				else
-				{
-					switch(inst.aif.MUXB)
+//				if((inst.aif.ALU==3)||(inst.aif.ALU==5)) // ACSBU signal
+					switch(inst.aif.ALU)
 					{
-					case 0:
-						BOP=Y;
+						case 3:
+						case 5:
+							BOP=Flags.Carry<<16;
+							break;
+				
+						default:
+							switch(inst.aif.MUXB)
+							{
+							case 0:
+								BOP=Y;
+								break;
+							case 1:
+								BOP=flags.ALU1<<16;
+								break;
+							case 2:
+								BOP=flags.ALU2<<16;
+								break;
+							case 3:
+//								if(inst.aif.M2SEL==0) // ACSBU==0 here always
+								switch(inst.aif.MUXB)
+								{
+								case 0:
+									BOP=( ((int)flags.MULT1*(((signed int)Y>>15))&~1)&ALUSIZEMASK );
+//								else
+									break;
+								default:
+									BOP=( ((int)flags.MULT1*(int)flags.MULT2*2)&ALUSIZEMASK );
+									break;
+								};
+								break;
+							}
 						break;
-					case 1:
-						BOP=flags.ALU1<<16;
-						break;
-					case 2:
-						BOP=flags.ALU2<<16;
-						break;
-					case 3:
-						if(inst.aif.M2SEL==0) // ACSBU==0 here always
-							BOP=( ((int)flags.MULT1*(((signed int)Y>>15))&~1)&ALUSIZEMASK );
-						else
-							BOP=( ((int)flags.MULT1*(int)flags.MULT2*2)&ALUSIZEMASK );
-						break;
-					}
-				}
+					};
 				//ok now ALU itself.
                                 //unsigned char ctt1,ctt2;
 				Flags.Over=Flags.Carry=0; // Any ALU op. change Over and possible Carry
@@ -736,9 +690,11 @@ unsigned int _dsp_Loop()
 					// logocal shift
 					case 7: // CLIP ari
 					case 23:// CLIP log
-						if(1&Flags.Over)
+					//	if(1&Flags.Over)
+						if(Flags.Over)
 						{
-							if(1&Flags.Nega)	Y=0x7FFFf000;
+							//if(1&Flags.Nega)	Y=0x7FFFf000;
+							if(Flags.Nega)  	Y=0x7FFFf000;
 							else				Y=0x80000000;
 						}
 						break;
@@ -789,12 +745,93 @@ unsigned int _dsp_Loop()
 				}
 
 				//fin :)
-			}//else //if(inst.aif.PAD)
+//			}//else //if(inst.aif.PAD)
+			break;
+
+			default:
+				switch((inst.raw>>7)&255) //special
+					{
+					case 0://NOP TODO
+							break;
+					case 1://branch accum
+							dregs.PC=(Y>>16)&0x3ff;
+							break;
+					case 2://set rbase
+							RBASEx4=(inst.cif.BCH_ADDR&0x3f)<<2;
+							break;
+					case 3://set rmap
+							REGi=inst.cif.BCH_ADDR&7;
+							break;
+					case 4://RTS
+							dregs.PC=RBSR;
+							break;
+					case 5://set op_mask
+							flags.nOP_MASK=~(inst.cif.BCH_ADDR&0x1f);
+							break;
+					case 6:// -not used2- ins
+							break;
+					case 7://SLEEP
+							Work=false;
+							break;
+					case 8:  case 9:  case 10: case 11:
+					case 12: case 13: case 14: case 15:
+							//jump //branch only if not branched
+							dregs.PC=inst.cif.BCH_ADDR;
+							break;
+					case 16: case 17: case 18: case 19:
+					case 20: case 21: case 22: case 23:
+							//jsr
+							RBSR=dregs.PC;
+							dregs.PC=inst.cif.BCH_ADDR;
+							break;
+					case 24: case 25: case 26: case 27:
+					case 28: case 29: case 30: case 31:
+							// branch only if was branched
+							dregs.PC=inst.cif.BCH_ADDR;
+							break;
+					case 32: case 33: case 34: case 35:
+					case 36: case 37: case 38: case 39:
+					case 40: case 41: case 42: case 43: // ??? -not used- instr's
+					case 44: case 45: case 46: case 47: // ??? -not used- instr's
+							// MOVEREG
+							{
+//								int Operand=OperandLoaderNWB();
+								if(inst.r2of.R1_DI)
+									iwriteh(ireadh(REGCONV[REGi][inst.r2of.R1]^RBASEx4),OperandLoaderNWB());
+								else
+									iwriteh(REGCONV[REGi][inst.r2of.R1]^RBASEx4,OperandLoaderNWB());
+							}
+							break;
+					case 48: case 49: case 50: case 51:
+					case 52: case 53: case 54: case 55:
+					case 56: case 57: case 58: case 59:
+					case 60: case 61: case 62: case 63:
+							// MOVE
+							{
+//								int Operand=OperandLoaderNWB();
+								if(inst.nrof.DI)
+									iwriteh(ireadh(inst.cif.BCH_ADDR),OperandLoaderNWB());
+								else
+									iwriteh(inst.cif.BCH_ADDR,OperandLoaderNWB());
+							}
+							break;
+					default: // Coundition branch
+//							if(1&BRCONDTAB[inst.br.bits][fExact+((Flags.raw*0x10080402)>>24)]) dregs.PC=inst.cif.BCH_ADDR;
+							if(BRCONDTAB[inst.br.bits][fExact+((Flags.raw*0x10080402)>>24)]) dregs.PC=inst.cif.BCH_ADDR;
+							break;
+				}//switch((inst.raw>>7)&255) //special
+//			}
+			break;
+//			else //if(inst.aif.PAD)
+//			{
+
+			};
 
 		}while(Work);//big while!!!
 
 
-		if(1&flags.GenFIQ)
+//		if(1&flags.GenFIQ)
+		if(flags.GenFIQ)
 		{
 			flags.GenFIQ=false;
 			_clio_GenerateFiq(0x800,0);//AudioFIQ
@@ -852,7 +889,7 @@ unsigned short __fastcall RegBase(unsigned int reg)
 	return res;
 }
 
-unsigned short __fastcall ireadh(unsigned int addr) //DSP IREAD (includes EI, I)
+unsigned short ireadh(unsigned int addr) //DSP IREAD (includes EI, I)
 {
 
 	unsigned short val;
@@ -1146,7 +1183,7 @@ unsigned int _dsp_ARMread2sema4(void)
 	return (dregs.Sema4Status<<16) | dregs.Sema4Data;
 }
 
- void __fastcall OperandLoader(int Requests)
+void OperandLoader(int Requests)
 {
 	int Operands;//total of operands
 	int Ptr;
@@ -1172,54 +1209,89 @@ unsigned int _dsp_ARMread2sema4(void)
 	do
 	{
 		operand.raw=NMem[dregs.PC++];
-		if(operand.nrof.TYPE==4)
+		switch(operand.nrof.TYPE)
 		{
+//		if(operand.nrof.TYPE==4)
+//		{
+		case 4:
 				//non reg format ///IT'S an address!!!
-				if(operand.nrof.DI)
+				//if(operand.nrof.DI)
+				switch(operand.nrof.DI)
+				{
+				case 0: 
+					OperandPool[Operands]=ireadh(flags.WRITEBACK=operand.nrof.OP_ADDR);
+//				}else
+//				{ 
+					break;
+				default:
 					OperandPool[Operands]=ireadh(flags.WRITEBACK=ireadh(operand.nrof.OP_ADDR));
-				else
-					OperandPool[Operands]=ireadh(flags.WRITEBACK=       operand.nrof.OP_ADDR);
+					break;
+				};
 				Operands++;
 
 				if(operand.nrof.WB1)
 					GWRITEBACK=flags.WRITEBACK;
 
-		}else if ((operand.nrof.TYPE&6)==6)
-		{
+//		}else if ((operand.nrof.TYPE&6)==6)
+//		{
+				break;
+		case 6:
+		case 7:
 				//case 6: and case 7:  immediate format
 				OperandPool[Operands]=operand.iof.IMMEDIATE<<(operand.iof.JUSTIFY&3);
 				flags.WRITEBACK=OperandPool[Operands++];
 
-		}else if(!(operand.nrof.TYPE&4))  // case 0..3
-		{
-				if(operand.r3of.R3_DI)
+//		}else if(!(operand.nrof.TYPE&4))  // case 0..3
+//		{
+				break;
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		
+//				if(operand.r3of.R3_DI)
+				switch(operand.r3of.R3_DI)
+				{
+				case 0:
+					OperandPool[Operands]=ireadh(REGCONV[REGi][operand.r3of.R3]^RBASEx4 );
+					break;
+				default:
 					OperandPool[Operands]=ireadh(ireadh(REGCONV[REGi][operand.r3of.R3]^RBASEx4));
-				else
-					OperandPool[Operands]=ireadh(       REGCONV[REGi][operand.r3of.R3]^RBASEx4 );
-				Operands++;
+					break;
+				};
 
-				if(operand.r3of.R2_DI)
+				switch(operand.r3of.R2_DI)
+				{
+				case 0:
+					OperandPool[Operands]=ireadh(REGCONV[REGi][operand.r3of.R2]^RBASEx4 );
+					break;
+				default:
 					OperandPool[Operands]=ireadh(ireadh(REGCONV[REGi][operand.r3of.R2]^RBASEx4));
-				else
-					OperandPool[Operands]=ireadh(       REGCONV[REGi][operand.r3of.R2]^RBASEx4 );
-				Operands++;
+					break;
+				};
 
-				// only R1 can be WRITEBACK
-				if(operand.r3of.R1_DI)
-					OperandPool[Operands]=ireadh(flags.WRITEBACK=ireadh(REGCONV[REGi][operand.r3of.R1]^RBASEx4));
-				else
+				switch(operand.r3of.R1_DI)
+				{
+				case 0:
 					OperandPool[Operands]=ireadh(flags.WRITEBACK=       REGCONV[REGi][operand.r3of.R1]^RBASEx4 );
-				Operands++;
+					break;
+				default:
+					OperandPool[Operands]=ireadh(flags.WRITEBACK=ireadh(REGCONV[REGi][operand.r3of.R1]^RBASEx4));
+					break;
+				};
+				Operands+=3;
 
-		}else //if(operand.nrof.TYPE==5)
-		{
+//		}else //if(operand.nrof.TYPE==5)
+//		{
+				break;
+		default:
 				//regged 1/2 format
 				if(operand.r2of.NUMREGS)
 				{
 					if(operand.r2of.R2_DI)
 						OperandPool[Operands]=ireadh(flags.WRITEBACK=ireadh(REGCONV[REGi][operand.r2of.R2]^RBASEx4));
 					else
-						OperandPool[Operands]=ireadh(flags.WRITEBACK=       REGCONV[REGi][operand.r2of.R2]^RBASEx4 );
+						OperandPool[Operands]=ireadh(flags.WRITEBACK=REGCONV[REGi][operand.r2of.R2]^RBASEx4 );
 					Operands++;
 
 					if(operand.r2of.WB2)
@@ -1229,12 +1301,13 @@ unsigned int _dsp_ARMread2sema4(void)
 				if(operand.r2of.R1_DI)
 					OperandPool[Operands]=ireadh(flags.WRITEBACK=ireadh(REGCONV[REGi][operand.r2of.R1]^RBASEx4));
 				else
-					OperandPool[Operands]=ireadh(flags.WRITEBACK=       REGCONV[REGi][operand.r2of.R1]^RBASEx4 );
+					OperandPool[Operands]=ireadh(flags.WRITEBACK=REGCONV[REGi][operand.r2of.R1]^RBASEx4 );
 				Operands++;
 
 				if(operand.r2of.WB1)
 					GWRITEBACK=flags.WRITEBACK;
-		}//if
+//		}//if
+		};
 	}while(Operands<Requests);
 
 

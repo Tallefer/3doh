@@ -52,7 +52,7 @@ void toggleFullscreen()
 }
 
 
-int initVideo(int w,int h, int bpp)
+int videoInit(int w,int h, int bpp)
 {
 
 	frame=(VDLFrame *)malloc(sizeof(VDLFrame));
@@ -100,7 +100,7 @@ int initVideo(int w,int h, int bpp)
 
 
 	image = SDL_CreateRGBSurface(
-			SDL_SWSURFACE,
+			SDL_HWSURFACE,
 			320, 240,
 			32,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
@@ -119,25 +119,30 @@ int initVideo(int w,int h, int bpp)
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
+	loadTexture(image);
 	return 0;
 
 
 }
 
+int videoClose()
+{
 
+	SDL_QuitSubSystem(SDL_INIT_VIDEO);
+	return 0;
+}
 
 
 void videoFlip()
 {
-	BitmapCrop bmpcrop;
-	enum ScalingAlgorithm sca=None;
-	int rw,rh;
+//	BitmapCrop bmpcrop;
+//	enum ScalingAlgorithm sca=None;
+//	int rw,rh;
 
 		fd_interface(FDP_DO_EXECFRAME,frame);
 
     	if(SDL_MUSTLOCK(image))SDL_LockSurface( image );
-		Get_Frame_Bitmap((VDLFrame *)frame,image->pixels,image->w,&bmpcrop,320,240,0,0,0,sca,&rw,&rh);
+		Get_Frame_Bitmap((VDLFrame *)frame,image->pixels,image->w,320,240,0,0,0);
 		if(SDL_MUSTLOCK(image))SDL_UnlockSurface( image );
 
 		loadTexture(image);

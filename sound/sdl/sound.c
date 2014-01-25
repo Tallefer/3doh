@@ -75,15 +75,15 @@ int soundInit()
 	printf("INFO: sound init success\n");
 
 	/* Read sound config */
-	configOpen("config.ini");
-	buffer_size=atoi(configReadString("sound","soundbuffer"));
-	configClose();
+//	configOpen("config.ini");
+//	buffer_size=atoi(configReadString("sound","soundbuffer"));
+//	configClose();
 
 	/* Set the audio format */
 	wanted.freq = 44100;
 	wanted.format = AUDIO_S16LSB;
 	wanted.channels = 2;    /* 1 = mono, 2 = stereo */
-	wanted.samples = 32;  /* Good low-latency value for callback */
+	wanted.samples = 2048;  /* Good low-latency value for callback */
 	wanted.callback = fill_audio;
 	wanted.userdata = NULL;
 
@@ -149,8 +149,8 @@ void soundFillBuffer(unsigned int dspLoop)
 void soundClose()
 {
 
-    SDL_CloseAudio();
-
+//    SDL_CloseAudio();
+	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 
 }
 

@@ -9,7 +9,7 @@ void _frame_Init();
 extern "C"
 {
 #endif
-void Get_Frame_Bitmap(
+/*void Get_Frame_Bitmap(
 	VDLFrame* sourceFrame,
 	void* destinationBitmap,
 	int destinationBitmapWidth,
@@ -22,6 +22,17 @@ void Get_Frame_Bitmap(
 	enum ScalingAlgorithm scalingAlgorithm,
 	int* resultingWidth,
 	int* resultingHeight);
+*/
+void Get_Frame_Bitmap(
+	VDLFrame* sourceFrame,
+	void* destinationBitmap,
+	int destinationBitmapWidth,
+	int copyWidth,
+	int copyHeight,
+	int addBlackBorder,
+	int copyPointlessAlphaByte,
+	int allowCrop
+	);
 #ifdef __cplusplus
 };
 #endif

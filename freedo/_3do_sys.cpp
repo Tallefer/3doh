@@ -67,16 +67,16 @@ int _3do_Init()
 
 	Memory=_arm_Init();
 
-        io_interface(EXT_READ_ROMS,Getp_ROMS());
-        rom=(unsigned char*)Getp_ROMS();
-        for(int i=(1024*1024*2)-4;i>=0;i-=4) *(int *)(rom+i)=_bswap(*(int *)(rom+i));
+    io_interface(EXT_READ_ROMS,Getp_ROMS());
+    rom=(unsigned char*)Getp_ROMS();
+    for(int i=(1024*1024*2)-4;i>=0;i-=4) *(int *)(rom+i)=_bswap(*(int *)(rom+i));
 	_vdl_Init(Memory+0x200000);   // Visible only VRAM to it
 	_sport_Init(Memory+0x200000);  // Visible only VRAM to it
 	_madam_Init(Memory);
 
-        _xbus_Init(_xbplug_MainDevice);
+    _xbus_Init(_xbplug_MainDevice);
 
-        _clio_Init(0x40); // 0x40 for start from  3D0-CD, 0x01/0x02 from PhotoCD ?? (NO use 0x40/0x02 for BIOS test)
+    _clio_Init(0x40); // 0x40 for start from  3D0-CD, 0x01/0x02 from PhotoCD ?? (NO use 0x40/0x02 for BIOS test)
 	_dsp_Init();
 	_diag_Init(-1);  // Select test, use -1 -- if d'nt need tests
 /*
@@ -185,7 +185,7 @@ int i,cnt=0;
 
         for(i=0;i<(12500000/60);)
         {
-// time_start=SDL_GetTicks();
+
                 if(Get_madam_FSM()==FSM_INPROCESS)
                // if(mfsm==FSM_INPROCESS)
                 {
@@ -195,8 +195,8 @@ int i,cnt=0;
                 }
 
                 cnt+=_arm_Execute();   
-//		time_end=SDL_GetTicks();
-//		if((time_end-time_start)>1)printf("time:%d %d\n",time_end-time_start,cnt);
+
+
                 if(cnt>>5){_3do_InternalFrame(cnt);i+=cnt;cnt=0;}
 
         }

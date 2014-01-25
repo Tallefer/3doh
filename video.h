@@ -27,7 +27,8 @@
 
 
 
-int initVideo(int w,int h, int bpp);
+int videoInit(int w,int h, int bpp);
+int videoClose();
 void toggleFullscreen();
 void videoFlip();
 

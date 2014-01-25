@@ -1327,6 +1327,9 @@ unsigned int __fastcall PPROC(unsigned int pixel, unsigned int fpix, unsigned in
 
 	pdeco	input1,out,pix1;
 
+	char r1,g1,b1;
+	char r2,g2,b2;
+
 	//return pixel;
 
 
@@ -1361,7 +1364,7 @@ unsigned int __fastcall PPROC(unsigned int pixel, unsigned int fpix, unsigned in
 	else
 		input1.raw=fpix;
 
-
+/*
 #pragma pack(push,1)
 	union
 	{
@@ -1374,27 +1377,27 @@ unsigned int __fastcall PPROC(unsigned int pixel, unsigned int fpix, unsigned in
 			char a;
 		};
 	} color1, color2, AOP, BOP;
-#pragma pack(pop)
+#pragma pack(pop)*/
 
 	switch(pixc.meaning.s2)
 	{
 	case 0:
-		color2.raw=0;
+//		color2.raw=0;
 		break;
 	case 1:
-		color2.R=color2.G=color2.B=(pixc.meaning.av>>AV.avsignal.dv3);
+		r2=g2=b2=(pixc.meaning.av>>AV.avsignal.dv3);
                 break;
 	case 2:
 		pix1.raw=fpix;
-		color2.R=(pix1.r16b.r)>>AV.avsignal.dv3;
-		color2.G=(pix1.r16b.g)>>AV.avsignal.dv3;
-		color2.B=(pix1.r16b.b)>>AV.avsignal.dv3;
+		r2=(pix1.r16b.r)>>AV.avsignal.dv3;
+		g2=(pix1.r16b.g)>>AV.avsignal.dv3;
+		b2=(pix1.r16b.b)>>AV.avsignal.dv3;
 		break;
 	case 3:
 		pix1.raw=pixel;
-		color2.R=(pix1.r16b.r)>>AV.avsignal.dv3;
-		color2.G=(pix1.r16b.g)>>AV.avsignal.dv3;
-		color2.B=(pix1.r16b.b)>>AV.avsignal.dv3;
+		r2=(pix1.r16b.r)>>AV.avsignal.dv3;
+		g2=(pix1.r16b.g)>>AV.avsignal.dv3;
+		b2=(pix1.r16b.b)>>AV.avsignal.dv3;
 		break;
 	}
 
@@ -1402,39 +1405,39 @@ unsigned int __fastcall PPROC(unsigned int pixel, unsigned int fpix, unsigned in
 	switch(pixc.meaning.ms)
 	{
 	case 0:
-		color1.R=PSCALAR[pixc.meaning.mxf][pixc.meaning.dv1][input1.r16b.r];
-		color1.G=PSCALAR[pixc.meaning.mxf][pixc.meaning.dv1][input1.r16b.g];
-		color1.B=PSCALAR[pixc.meaning.mxf][pixc.meaning.dv1][input1.r16b.b];
+		r1=PSCALAR[pixc.meaning.mxf][pixc.meaning.dv1][input1.r16b.r];
+		g1=PSCALAR[pixc.meaning.mxf][pixc.meaning.dv1][input1.r16b.g];
+		b1=PSCALAR[pixc.meaning.mxf][pixc.meaning.dv1][input1.r16b.b];
 		break;
 	case 1:
-		color1.R=PSCALAR[(amv>>6)&7][pixc.meaning.dv1][input1.r16b.r];
-		color1.G=PSCALAR[(amv>>3)&7][pixc.meaning.dv1][input1.r16b.g];
-		color1.B=PSCALAR[amv&7][pixc.meaning.dv1][input1.r16b.b];
+		r1=PSCALAR[(amv>>6)&7][pixc.meaning.dv1][input1.r16b.r];
+		g1=PSCALAR[(amv>>3)&7][pixc.meaning.dv1][input1.r16b.g];
+		b1=PSCALAR[amv&7][pixc.meaning.dv1][input1.r16b.b];
 		break;
 	case 2:
 		pix1.raw=pixel;
-		color1.R=PSCALAR[pix1.r16b.r>>2][pix1.r16b.r&3][input1.r16b.r];
-		color1.G=PSCALAR[pix1.r16b.g>>2][pix1.r16b.g&3][input1.r16b.g];
-		color1.B=PSCALAR[pix1.r16b.b>>2][pix1.r16b.b&3][input1.r16b.b];
+		r1=PSCALAR[pix1.r16b.r>>2][pix1.r16b.r&3][input1.r16b.r];
+		g1=PSCALAR[pix1.r16b.g>>2][pix1.r16b.g&3][input1.r16b.g];
+		b1=PSCALAR[pix1.r16b.b>>2][pix1.r16b.b&3][input1.r16b.b];
 		break;
 	case 3:
-		color1.R=PSCALAR[0][pixc.meaning.dv1][input1.r16b.r];
-		color1.G=PSCALAR[0][pixc.meaning.dv1][input1.r16b.g];
-		color1.B=PSCALAR[0][pixc.meaning.dv1][input1.r16b.b];
+		r1=PSCALAR[0][pixc.meaning.dv1][input1.r16b.r];
+		g1=PSCALAR[0][pixc.meaning.dv1][input1.r16b.g];
+		b1=PSCALAR[0][pixc.meaning.dv1][input1.r16b.b];
 		break;
 	}
 
 	//ok -- we got the sources -- now RGB processing
 	//AOP/BOP calculation
-	AOP.raw=color1.raw&PXOR1;
-	color1.raw&=PXOR2;
+//	AOP.raw=color1.raw&PXOR1;
+//	color1.raw&=PXOR2;
 
 
-	if(AV.avsignal.NEG)
-		BOP.raw=color2.raw^0x00ffffff;
+/*	if(AV.avsignal.NEG)
+		BOP.raw=r2aw^0x00ffffff;
 	else
 	{
-		BOP.raw=color2.raw^color1.raw;
+		BOP.raw=r2aw^color1.raw;
 	}
 
 	if(AV.avsignal.XTEND)
@@ -1442,36 +1445,36 @@ unsigned int __fastcall PPROC(unsigned int pixel, unsigned int fpix, unsigned in
 		BOP.R=(BOP.R<<3)>>3;
 		BOP.B=(BOP.B<<3)>>3;
 		BOP.G=(BOP.G<<3)>>3;
-	}
+	}*/
 
-	color2.R=(AOP.R+BOP.R+AV.avsignal.NEG)>>pixc.meaning.dv2;
-	color2.G=(AOP.G+BOP.G+AV.avsignal.NEG)>>pixc.meaning.dv2;
-	color2.B=(AOP.B+BOP.B+AV.avsignal.NEG)>>pixc.meaning.dv2;
+/*	r2=(AOP.R+BOP.R+AV.avsignal.NEG)>>pixc.meaning.dv2;
+	g2=(AOP.G+BOP.G+AV.avsignal.NEG)>>pixc.meaning.dv2;
+	b2=(AOP.B+BOP.B+AV.avsignal.NEG)>>pixc.meaning.dv2;*/
 
 
-//fprintf(flog,"%d %d %02x\t%02d %02d %02d\n", pixc.meaning.s2, pixc.meaning.ms, AV.raw, color2.R, color2.G, color2.B);
+//fprintf(flog,"%d %d %02x\t%02d %02d %02d\n", pixc.meaning.s2, pixc.meaning.ms, AV.raw, r2, g2, b2);
 
-	if(!AV.avsignal.nCLIP)
+/*	if(!AV.avsignal.nCLIP)
 	{
-			if(color2.R<0)  color2.R=0;
-			else if(color2.R>31) color2.R=31;
+			if(r2<0)  r2=0;
+			else if(r2>31) r2=31;
 
-			if(color2.G<0)  color2.G=0;
-			else if(color2.G>31) color2.G=31;
+			if(g2<0)  g2=0;
+			else if(g2>31) g2=31;
 
-			if(color2.B<0)  color2.B=0;
-			else if(color2.B>31) color2.B=31;
+			if(b2<0)  b2=0;
+			else if(b2>31) b2=31;
 
-	}
+	}*/
 
 
 
-	out.raw=0;
-	out.r16b.r=color2.R;
-	out.r16b.g=color2.G;
-	out.r16b.b=color2.B;
+//	out.raw=0;
+	out.r16b.r=r1;
+	out.r16b.g=g1;
+	out.r16b.b=b1;
 
-	if(!(CCBFLAGS&CCB_NOBLK) && out.raw==0) out.raw=1<<10;
+//	if(!(CCBFLAGS&CCB_NOBLK) && out.raw==0) out.raw=1<<10;
 
 	//if(!(PRE1&PRE1_NOSWAP) && (CCBCTL0&(1<<27)))
 	//			out.raw=(out.raw&0x7ffe)|((out.raw&0x8000)>>15)|((out.raw&1)<<15);

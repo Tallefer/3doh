@@ -137,12 +137,17 @@ char *configReadString(char *section,char *name)
 	memset(temp,0,sizeof(temp));
 //	fgets(temp,20,config);
 
+	printf("searching section %s value %s\n",section,name);
+
 	while((!feof(config))&&(!sectionfound))
+//	while(fscanf(config,"%[^\n]",temp)==2)
 	{
-		fscanf(config,"%[^\n] ",temp);
+//		fscanf(config,"%[^\n] ",temp);
+		fgets(temp,20,config);
 		sprintf(stemp,"[%s]",section);
 
-		//printf("%s\n",temp);
+		printf("found: %s\n",temp);
+		printf("match: %s\n",stemp);
 		
 
 		//if section found
@@ -150,6 +155,7 @@ char *configReadString(char *section,char *name)
 		{
 			printf("encontrada sección %s\n",temp);
 			sectionfound=1;
+			break;
 
 		}
 		fflush(stdout);
@@ -161,12 +167,14 @@ char *configReadString(char *section,char *name)
 	//search value
 	if(sectionfound)
 	{
-
+		memset(temp,0,sizeof(temp));
 		while(!feof(config))
 		{
 
 		//	fgets(temp,20,config);
-			fscanf(config,"%*[\n]",temp);
+//			fscanf(config,"%*[\n]",temp);
+			fgets(temp,20,config);
+			printf("value found: %s\n",temp);
 
 			//buscar etiqueta
 			fscanf(config,"%[^=]=%[^\n]",temp,value);

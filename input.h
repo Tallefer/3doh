@@ -61,6 +61,7 @@ unsigned char *inputRead();
 int inputLength();
 int inputEnum();
 int inputInit();
+int inputClose();
 SDL_Joystick *inputOpen(int joyid);
 void inputPoll(SDL_Joystick *joy);
 int inputQuit();

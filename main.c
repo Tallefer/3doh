@@ -162,6 +162,7 @@ void * emuinterface(int procedure, void *datum)
 		break;
 	case EXT_PUSH_SAMPLE:
 		soundFillBuffer(*((unsigned int*)&datum));
+		count_samples++;
 		break;
 	case EXT_SWAPFRAME:
 		return swapFrame(datum);
@@ -273,13 +274,14 @@ int initEmu(int xres,int yres, int bpp, int armclock)
 	int arm_clock=armclock;
 	int tex_quality=0;
 	int quit=0;
+	int waitfps;
 	
 
 //	memset(frame,0,sizeof(VDLFrame));
 //	printf("frame %p\n",frame);
 	io_interface=&emuinterface;
 	fd_interface=&_freedo_Interface;
-	initVideo(xres,yres,bpp);
+	videoInit(xres,yres,bpp);
 //	toggleFullscreen(screen);
 	soundInit();
 	inputInit();
@@ -314,9 +316,20 @@ int initEmu(int xres,int yres, int bpp, int armclock)
 		soundRun();
 
 		quit = inputQuit();
-	frame_end=timerGettime();
-	frames++;
 
+		/* Framerate control */
+		waitfps=timerGettime()-frame_end;
+		if(waitfps<17)
+		{
+	
+			SE_timer_waitframerate(17-waitfps);
+
+		}
+
+		frame_end=timerGettime();
+		frames++;
+
+		/* Calculate Frames Per Second */
 		if((frame_end-time_start)>=1000) 
 		{
 
@@ -328,8 +341,21 @@ int initEmu(int xres,int yres, int bpp, int armclock)
 
 		}
 
+		
+
 	}
 
+
+	/* Close everything and return */
+	videoClose();
+	soundClose();
+	inputClose();
+
+#ifndef DREAMCAST
+
+	SDL_Quit();
+
+#endif
 
 	return 1;
 }
